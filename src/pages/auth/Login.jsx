@@ -18,37 +18,37 @@ export default function Login() {
     setError("");
 
     try {
-      // 1. Get CSRF cookie (safe to call multiple times)
-      // await api.get("/sanctum/csrf-cookie");
+      // 1. Get CSRF cookie
+      await api.get("/sanctum/csrf-cookie");
 
       // // 2. Login
-      // await api.post("/api/login", {
-      //   email: data.email,
-      //   password: data.password,
-      // });
+      await api.post("/api/login", {
+        email: data.email,
+        password: data.password,
+      });
 
       toast.success("Login Successful!");
 
       // 3. Get current user + role
-      // const userRes = await api.get("/api/me");
-      // const role = userRes.data.roles[0]?.name;
-      // const mustChangePassword = userRes.data.must_change_password;
-navigate("/superadmin/dashboard",  { replace: true });
-      // if(mustChangePassword){
-      //   if(role !== "super-admin"){
-      //     navigate("/reset-password", { state: { user: userRes.data } }, { replace: true });
-      //   }
-      // }else{
-      //   if (role === "super-admin") {
-      //     navigate("/superadmin/dashboard",  { replace: true });
-      //   } else if (role === "cost-center") {
-      //     navigate("/costcenter/dashboard", { replace: true });
-      //   } else if (role === "vendor-admin") {
-      //     navigate("/vendor/dashboard", { replace: true });
-      //   } else {
-      //     navigate("/dashboard", { replace: true });
-      //   }
-      // }
+      const userRes = await api.get("/api/me");
+      const role = userRes.data.roles[0]?.name;
+      const mustChangePassword = userRes.data.must_change_password;
+
+      if(mustChangePassword){
+        if(role !== "super-admin"){
+          navigate("/reset-password", { state: { user: userRes.data } }, { replace: true });
+        }
+      }else{
+        if (role === "super-admin") {
+          navigate("/superadmin/dashboard",  { replace: true });
+        } else if (role === "cost-center") {
+          navigate("/costcenter/dashboard", { replace: true });
+        } else if (role === "vendor-admin") {
+          navigate("/vendor/dashboard", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
+      }
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -79,7 +79,7 @@ navigate("/superadmin/dashboard",  { replace: true });
         <form onSubmit={handleSubmit(login)} className="space-y-6">
           <div>
             <input
-              // {...register("email", { required: true })}
+              {...register("email", { required: true })}
               type="email"
               placeholder="Email address"
               disabled={loading}
@@ -89,7 +89,7 @@ navigate("/superadmin/dashboard",  { replace: true });
 
           <div>
             <input
-              // {...register("password", { required: true })}
+              {...register("password", { required: true })}
               type="password"
               placeholder="Password"
               disabled={loading}
