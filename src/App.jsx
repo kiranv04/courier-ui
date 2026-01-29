@@ -4,6 +4,8 @@ import AuthLayout from './layout/AuthLayout'
 import Login from './pages/auth/Login'
 import DashboardLayout from './layout/DashboardLayout';
 import Dashboard from './pages/superadmin/Dashboard';
+import Location from './pages/superadmin/Location';
+import Branch from './pages/superadmin/Branch';
 
 const queryClient = new QueryClient();
 
@@ -18,13 +20,13 @@ function App() {
         </Route>
         <Route element={<DashboardLayout />}>
           <Route path="/superadmin/dashboard" element={<Dashboard />} />
+          <Route path="/superadmin/locations" element={<Location />} />
+          <Route path="/superadmin/branches" element={<Branch />} />
           {/* <Route path="/superadmin/vehicle-categories" element={<VehicleCategory />} />
           <Route path="/superadmin/vehicle-types" element={<VehicleType />} />
-          <Route path="/superadmin/locations" element={<Location />} />
           <Route path="/superadmin/vendors" element={<Vendor />} />
           <Route path="/superadmin/vendor-user" element={<VendorUser />} />
-          <Route path="/superadmin/companies" element={<Company />} />
-          <Route path="/superadmin/branches" element={<Branch />} /> */}
+          <Route path="/superadmin/companies" element={<Company />} /> */}
           {/* <Route path="/superadmin/company-users" element={<VendorUser />} /> */}
         </Route>
       </Routes>

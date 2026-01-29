@@ -23,7 +23,7 @@ function MenuItem({ item, isActive, depth = 0, openState }) {
           }
         }}
         className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all
-          ${isActive ? "bg-black text-white shadow-lg" : "text-gray-300 hover:bg-gray-800 hover:text-white"}
+          ${isActive ? "bg-black text-white shadow-lg" : "text-black hover:bg-gray-800 hover:text-white"}
           ${depth > 0 ? "pl-12" : ""}
         `}
       >

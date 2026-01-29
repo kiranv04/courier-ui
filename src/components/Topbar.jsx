@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, LogOut, User, Settings, Bell } from "lucide-react";
-// import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import api from "../services/api";
 
 export default function Topbar({collapsed}) {
-//   const { data: user, isLoading } = useAuth();
+  const { data: user, isLoading } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -18,8 +18,8 @@ export default function Topbar({collapsed}) {
     }
   };
 
-  const name =  "User";
-  const email = "";
+  const name = user?.name || "User";
+  const email = user?.email || "";
 
   return (
     <header className={`fixed top-4 transition-all duration-300 ${collapsed ? "left-24" : "left-72"} right-8 z-40 mx-auto max-w-7xl`}>
