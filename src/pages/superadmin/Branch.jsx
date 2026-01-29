@@ -254,7 +254,7 @@ export default function Branch() {
             setEditingBranch(null);
             setModalOpen(true);
           }}
-          className="bg-linear-to-r from-blue-950 to-indigo-800 text-white cursor-pointer px-6 py-3 rounded-lg hover:opacity-90 flex items-center gap-2 transition"
+          className="bg-linear-to-r from-blue-500 to-teal-300 text-black cursor-pointer px-6 py-3 rounded-lg hover:opacity-90 flex items-center gap-2 transition"
         >
           <Plus size={20} />
           Add Branch
