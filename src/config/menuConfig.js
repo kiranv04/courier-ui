@@ -4,13 +4,13 @@ export const menuConfig = {
   "super-admin": [
     { to: "/superadmin/dashboard", label: "Dashboard", icon: Home },
     {
-      label: "Companies", 
+      label: "Branches", 
       icon: Building2, 
       children: [
-        { to: "/superadmin/companies", label: "Company Management" },
-        // { to: "/superadmin/branches", label: "Branch Management" },
+        // { to: "/superadmin/companies", label: "Company Management" },
+        { to: "/superadmin/branches", label: "Branch Management" },
+        { to: "/superadmin/branch-users", label: "Branch Users" },
         // { to: "/superadmin/cost-centers", label: "Cost Center Management" },
-        { to: "/superadmin/company-users", label: "Company Users" },
       ]
     },
     // { 
