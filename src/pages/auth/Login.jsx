@@ -41,10 +41,10 @@ export default function Login() {
       }else{
         if (role === "super-admin") {
           navigate("/superadmin/dashboard",  { replace: true });
-        } else if (role === "cost-center") {
-          navigate("/costcenter/dashboard", { replace: true });
-        } else if (role === "vendor-admin") {
-          navigate("/vendor/dashboard", { replace: true });
+        } else if (role === "warehouse-admin") {
+          navigate("/warehouse/dashboard", { replace: true });
+        } else if (role === "branch-admin") {
+          navigate("/branch/dashboard", { replace: true });
         } else {
           navigate("/dashboard", { replace: true });
         }
