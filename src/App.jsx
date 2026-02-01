@@ -9,6 +9,7 @@ import Branch from './pages/superadmin/Branch';
 import BranchUser from './pages/superadmin/BranchUser';
 import ResetPassword from './pages/auth/ResetPassword';
 import Warehouse from './pages/superadmin/Warehouse';
+import WarehouseUser from './pages/superadmin/WarehouseUser';
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,7 @@ function App() {
             <Route path="/superadmin/branches" element={<Branch />} />
             <Route path="/superadmin/branch-users" element={<BranchUser />} />
             <Route path="/superadmin/warehouses" element={<Warehouse />} />
-            {/* <Route path="/superadmin/warehouse-users" element={<WarehouseUser />} /> */}
+            <Route path="/superadmin/warehouse-users" element={<WarehouseUser />} />
             {/* <Route path="/superadmin/vehicle-categories" element={<VehicleCategory />} />
             <Route path="/superadmin/vehicle-types" element={<VehicleType />} />
             <Route path="/superadmin/vendors" element={<Vendor />} />
