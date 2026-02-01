@@ -19,17 +19,6 @@ export const menuConfig = {
         { to: "/superadmin/warehouse-users", label: "Warehouse Users" },
       ]
     },
-    // { 
-    //   label: "Vendors", 
-    //   icon: Truck, 
-    //   children: [
-    //     { to: "/superadmin/vendors", label: "Vendor Management" },
-    //     { to: "/superadmin/vendor-user", label: "Vendor Users" },
-    //   ]
-    // },
-    // { to: "/superadmin/drivers", label: "Drivers", icon: Car },
-    // { to: "/superadmin/employees", label: "Employees", icon: Users },
-    // { to: "/superadmin/bookings", label: "Bookings", icon: Calendar },
     { to: "/superadmin/billing", label: "Billing", icon: DollarSign },
     { to: "/superadmin/reports", label: "Reports", icon: FileText },
     {
@@ -46,16 +35,15 @@ export const menuConfig = {
     // { to: "/superadmin/settings", label: "Settings", icon: Settings },
   ],
 
-  "cost-center": [
-    { to: "/costcenter/dashboard", label: "Dashboard", icon: Home },
-    { to: "/costcenter/bookings", label: "My Bookings", icon: Calendar },
-    { to: "/costcenter/employees", label: "Employees", icon: Users },
-    { to: "/costcenter/reports", label: "Reports", icon: FileText },
+  "branch-admin": [
+    { to: "/branch/dashboard", label: "Dashboard", icon: Home },
+    { to: "/branch/bookings", label: "My Bookings", icon: Calendar },
+    { to: "/branch/employees", label: "Employees", icon: Users },
+    { to: "/branch/reports", label: "Reports", icon: FileText },
   ],
 
-  "vendor": [
-    { to: "/vendor/dashboard", label: "Dashboard", icon: Home },
-    { to: "/vendor/bookings", label: "Assigned Trips", icon: Car },
-    { to: "/vendor/drivers", label: "My Drivers", icon: Users },
+  "warehouse-admin": [
+    { to: "/warehouse/dashboard", label: "Dashboard", icon: Home },
+    { to: "/warehouse/bookings", label: "Assigned Trips", icon: Car },
   ]
 };
