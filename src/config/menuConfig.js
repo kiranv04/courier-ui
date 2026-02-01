@@ -1,4 +1,4 @@
-import { Home, Building2, Car, Users, FileText, Settings, Calendar, DollarSign, Wrench, Truck } from "lucide-react";
+import { Home, Building2, Car, Users, FileText, Settings, Calendar, DollarSign, Wrench, Truck, Warehouse } from "lucide-react";
 
 export const menuConfig = {
   "super-admin": [
@@ -7,10 +7,16 @@ export const menuConfig = {
       label: "Branches", 
       icon: Building2, 
       children: [
-        // { to: "/superadmin/companies", label: "Company Management" },
         { to: "/superadmin/branches", label: "Branch Management" },
         { to: "/superadmin/branch-users", label: "Branch Users" },
-        // { to: "/superadmin/cost-centers", label: "Cost Center Management" },
+      ]
+    },
+    {
+      label: "Warehouses", 
+      icon: Warehouse, 
+      children: [
+        { to: "/superadmin/warehouses", label: "Warehouse Management" },
+        { to: "/superadmin/warehouse-users", label: "Warehouse Users" },
       ]
     },
     // { 
