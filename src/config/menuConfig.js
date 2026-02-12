@@ -19,6 +19,8 @@ export const menuConfig = {
         { to: "/superadmin/warehouse-users", label: "Warehouse Users" },
       ]
     },
+    { to: "/branch/customers", label: "Customers", icon: Users },
+    { to: "/branch/shipments", label: "Shipments", icon: Truck },
     { to: "/superadmin/billing", label: "Billing", icon: DollarSign },
     { to: "/superadmin/reports", label: "Reports", icon: FileText },
     {
@@ -37,8 +39,10 @@ export const menuConfig = {
 
   "branch-admin": [
     { to: "/branch/dashboard", label: "Dashboard", icon: Home },
-    { to: "/branch/bookings", label: "My Bookings", icon: Calendar },
+    { to: "/branch/bookings", label: "Bookings", icon: Calendar },
+    { to: "/branch/shipments", label: "Shipments", icon: Truck },
     { to: "/branch/employees", label: "Employees", icon: Users },
+    { to: "/branch/customers", label: "Customers", icon: Users },
     { to: "/branch/reports", label: "Reports", icon: FileText },
   ],
 

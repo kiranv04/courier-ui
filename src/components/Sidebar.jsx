@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
-// import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { menuConfig } from "../config/menuConfig";
 import { useState } from "react";
 
@@ -93,10 +93,10 @@ function MenuItem({ item, isActive, depth = 0, openState }) {
 }
 
 export default function Sidebar({ collapsed = false, onToggle }) {
-//   const { user } = useAuth();
+  const { data: user, isLoading, error } = useAuth();
   const { pathname } = useLocation();
 
-  const role = "super-admin";
+  const role = user?.roles?.[0]?.name || "super-admin";
   const menuItems = menuConfig[role] || [];
 
   return (
