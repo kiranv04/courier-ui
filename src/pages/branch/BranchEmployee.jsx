@@ -36,9 +36,6 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
     queryFn: () => api.get("/api/branches").then(res => res.data.data || res.data),
     select: (data) => data.filter(b => b.is_active),
     staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
   });
 
   const mutation = useMutation({
@@ -245,7 +242,7 @@ const ConfirmModal = ({ isOpen, onClose, title, onConfirm, loading }) => {
   );
 };
 
-export default function BranchUser() {
+export default function BranchEmployee() {
   const [filter, setFilter] = useState("active");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -269,7 +266,6 @@ export default function BranchUser() {
     staleTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    gcTime: Infinity,
   });
 
 	const branchMap = {};
@@ -306,7 +302,7 @@ export default function BranchUser() {
   return (
     <div className="p-8 bg-white rounded-2xl shadow-2xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Branch Users</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Branch Employees</h1>
         <button
           onClick={() => {
             setEditingUser(null);
@@ -315,7 +311,7 @@ export default function BranchUser() {
           className="bg-linear-to-r from-blue-500 to-teal-300 text-black cursor-pointer px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
           <Plus size={20} />
-          Add Branch User
+          Add Branch Employee
         </button>
       </div>
 
@@ -343,7 +339,7 @@ export default function BranchUser() {
               <tr>
                 <th className="text-left p-4">Name</th>
                 <th className="text-left p-4">Email</th>
-                <th className="text-left p-4">Branch</th>
+                <th className="text-left p-4">Role</th>
                 <th className="text-left p-4">Status</th>
                 <th className="text-right p-4">Actions</th>
               </tr>

@@ -10,33 +10,60 @@ import BranchUser from './pages/superadmin/BranchUser';
 import ResetPassword from './pages/auth/ResetPassword';
 import Warehouse from './pages/superadmin/Warehouse';
 import WarehouseUser from './pages/superadmin/WarehouseUser';
+import BranchDashboard from './pages/branch/BranchDashboard';
+import BranchEmployee from './pages/branch/BranchEmployee';
+import Customers from './pages/superadmin/Customer';
+import { useAuth } from './hooks/useAuth';
+import CreateShipment from './pages/branch/CreateShipment';
+import { Loader2 } from 'lucide-react';
 
 const queryClient = new QueryClient();
+
+function AppRoutes() {
+  const { data: user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-teal-600">
+        <Loader2 className="animate-spin text-white" size={40} />
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route element={<AuthLayout />}>
+        <Route 
+          path="/login" 
+          element={user ? <Navigate to="/superadmin/dashboard" replace /> : <Login />} 
+        />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+      </Route>
+
+      <Route element={<DashboardLayout />}>
+        <Route path="/superadmin/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/locations" element={user ? <Location /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/branches" element={user ? <Branch /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/branch-users" element={user ? <BranchUser /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/warehouses" element={user ? <Warehouse /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/warehouse-users" element={user ? <WarehouseUser /> : <Navigate to="/login" replace />} />
+        <Route path="/branch/dashboard" element={user ? <BranchDashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/branch/employees" element={user ? <BranchEmployee /> : <Navigate to="/login" replace />} />
+        <Route path="/branch/customers" element={user ? <Customers /> : <Navigate to="/login" replace />} />
+        <Route path="/branch/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />
+      </Route>
+    </Routes>
+  );
+  
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Navigate to="/login" />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-          </Route>
-          <Route element={<DashboardLayout />}>
-            <Route path="/superadmin/dashboard" element={<Dashboard />} />
-            <Route path="/superadmin/locations" element={<Location />} />
-            <Route path="/superadmin/branches" element={<Branch />} />
-            <Route path="/superadmin/branch-users" element={<BranchUser />} />
-            <Route path="/superadmin/warehouses" element={<Warehouse />} />
-            <Route path="/superadmin/warehouse-users" element={<WarehouseUser />} />
-            {/* <Route path="/superadmin/vehicle-categories" element={<VehicleCategory />} />
-            <Route path="/superadmin/vehicle-types" element={<VehicleType />} />
-            <Route path="/superadmin/vendors" element={<Vendor />} />
-            <Route path="/superadmin/vendor-user" element={<VendorUser />} />
-            <Route path="/superadmin/companies" element={<Company />} /> */}
-          </Route>
-        </Routes>
+        <AppRoutes />
       </BrowserRouter>
     </QueryClientProvider>
   )
