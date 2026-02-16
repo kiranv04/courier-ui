@@ -2,20 +2,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, LogOut, User, Settings, Bell } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import api from "../services/api";
+import { useLogout } from "../hooks/useLogout";
 
 export default function Topbar({collapsed}) {
   const { data: user, isLoading } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const logout = useLogout();
 
   const handleLogout = async () => {
-    try {
-      await api.post("/api/logout");
-    } catch (err) {
-      // Session already cleared on backend, safe to redirect
-    } finally {
-      window.location.href = "/login"; // Full reload to clear everything
-    }
+    logout.mutate();
   };
 
   const name = user?.name || "User";

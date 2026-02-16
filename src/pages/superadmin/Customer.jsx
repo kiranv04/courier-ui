@@ -89,13 +89,106 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const [shipGst, setShipGst] = useState("");
 
   const queryClient = useQueryClient();
-  console.log("Customer in modal:", customer);
   
   useEffect(() => {
     if (customer) {
-      setType(customer.type);
-      setCustomerType(customer.customer_type);
-    } }, [customer]);
+      // Edit mode: pre-fill all fields from the selected customer
+      setType(customer.type || "Individual");
+      setCustomerType(customer.customer_type || "cash");
+
+      // Billing / main fields (adjust field names to match your backend response)
+      setName(customer.name || "");
+      setCompanyName(customer.company_name || "");
+      setAadhaarNumber(customer.aadhar_number || "");
+      setPanNumber(customer.pan_number || "");
+      setGstNumber(customer.gst_number || "");
+
+      // Billing address (adjust keys to match your API response structure)
+      setBillName(customer.billing_name || "");
+      setBillCompany(customer.billing_company_name || "");
+      setBillLine1(customer.billing_address_line1 || "");
+      setBillLine2(customer.billing_address_line2 || "");
+      setBillCity(customer.billing_city || "");
+      setBillPincode(customer.billing_pincode || "");
+      setBillPhone(customer.billing_phone || "");
+      setBillEmail(customer.billing_email || "");
+      setBillState(customer.billing_state_id || "");
+      setBillGst(customer.billing_gst_number || "");
+
+      // Shipping (only if different)
+      if (customer.same_address === 0) {
+        setSameAddress(false);
+        setShipName(customer.shipping_name || "");
+        setShipCompany(customer.shipping_company_name || "");
+        setShipLine1(customer.shipping_address_line1 || "");
+        setShipLine2(customer.shipping_address_line2 || "");
+        setShipCity(customer.shipping_city || "");
+        setShipPincode(customer.shipping_pincode || "");
+        setShipPhone(customer.shipping_phone || "");
+        setShipEmail(customer.shipping_email || "");
+        setShipState(customer.shipping_state_id || "");
+        setShipGst(customer.shipping_gst_number || "");
+      } else {
+        setSameAddress(true);
+        // Optional: clear shipping fields when same address
+        setShipName("");
+        setShipCompany("");
+        setShipLine1("");
+        setShipLine2("");
+        setShipCity("");
+        setShipPincode("");
+        setShipPhone("");
+        setShipEmail("");
+        setShipState("");
+        setShipGst("");
+      }
+
+      // Note: Files & previews are NOT pre-filled (can't load existing files client-side)
+      // You'll need backend to return photo URLs if you want to show existing images
+      setAadhaarPreview(null);
+      setPanPreview(null);
+      setGstPreview(null);
+      setAadhaarFile(null);
+      setPanFile(null);
+      setGstFile(null);
+    } else {
+      // Add mode: reset everything to defaults
+      setType("Individual");
+      setCustomerType("cash");
+      setName("");
+      setCompanyName("");
+      setAadhaarNumber("");
+      setPanNumber("");
+      setGstNumber("");
+      setBillName("");
+      setBillCompany("");
+      setBillLine1("");
+      setBillLine2("");
+      setBillCity("");
+      setBillPincode("");
+      setBillPhone("");
+      setBillEmail("");
+      setBillState("");
+      setBillGst("");
+      setSameAddress(true);
+      setShipName("");
+      setShipCompany("");
+      setShipLine1("");
+      setShipLine2("");
+      setShipCity("");
+      setShipPincode("");
+      setShipPhone("");
+      setShipEmail("");
+      setShipState("");
+      setShipGst("");
+      setAadhaarPreview(null);
+      setPanPreview(null);
+      setGstPreview(null);
+      setAadhaarFile(null);
+      setPanFile(null);
+      setGstFile(null);
+    }
+  }, [customer]);
 
   // Hard-coded states for dropdown (mock)
   const { data: states = [] } = useQuery({
@@ -158,6 +251,8 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
       formData.append("aadhar_number", aadhaarNumber.trim());
       formData.append("pan_number", panNumber.trim().toUpperCase());
       formData.append("gst_number", gstNumber.trim().toUpperCase());
+      formData.append("contact_person", billName.trim());
+      formData.append("contact_phone", billPhone.trim());
 
       // Billing address
       formData.append("billing_name", billName.trim());
@@ -551,6 +646,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
                 value={shipPhone}
                 onChange={(e) => setShipPhone(e.target.value)}
                 placeholder="Phone Number"
+                maxLength={10}
                 className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
