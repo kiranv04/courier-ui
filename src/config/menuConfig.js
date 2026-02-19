@@ -7,7 +7,7 @@ export const menuConfig = {
       label: "Masters",
       icon: Wrench,
       children: [
-        // { to: "/superadmin/vehicle-types", label: "Vehicle Types" },
+        { to: "/superadmin/cft", label: "CFTs" },
         // { to: "/superadmin/vehicle-categories", label: "Vehicle Categories" },
         { to: "/superadmin/locations", label: "Locations" },
         // { to: "/superadmin/rate-cards", label: "Rate Cards" },
