@@ -4,26 +4,6 @@ export const menuConfig = {
   "super-admin": [
     { to: "/superadmin/dashboard", label: "Dashboard", icon: Home },
     {
-      label: "Branches", 
-      icon: Building2, 
-      children: [
-        { to: "/superadmin/branches", label: "Branch Management" },
-        { to: "/superadmin/branch-users", label: "Branch Users" },
-      ]
-    },
-    {
-      label: "Warehouses", 
-      icon: Warehouse, 
-      children: [
-        { to: "/superadmin/warehouses", label: "Warehouse Management" },
-        { to: "/superadmin/warehouse-users", label: "Warehouse Users" },
-      ]
-    },
-    { to: "/branch/customers", label: "Customers", icon: Users },
-    { to: "/branch/shipments", label: "Shipments", icon: Truck },
-    { to: "/superadmin/billing", label: "Billing", icon: DollarSign },
-    { to: "/superadmin/reports", label: "Reports", icon: FileText },
-    {
       label: "Masters",
       icon: Wrench,
       children: [
@@ -34,6 +14,26 @@ export const menuConfig = {
         // { to: "/superadmin/cost-centers", label: "Cost Centers" },
       ]
     },
+    {
+      label: "Branches", 
+      icon: Building2, 
+      children: [
+        { to: "/superadmin/branches", label: "Branch Management" },
+        { to: "/superadmin/branch-users", label: "Branch Users" },
+      ]
+    },
+    {
+      label: "Transit Hubs", 
+      icon: Warehouse, 
+      children: [
+        { to: "/superadmin/transithub", label: "Transit Hub Management" },
+        { to: "/superadmin/transithub-users", label: "Transit Hub Users" },
+      ]
+    },
+    { to: "/branch/customers", label: "Customers", icon: Users },
+    { to: "/branch/shipments", label: "Shipments", icon: Truck },
+    { to: "/superadmin/billing", label: "Billing", icon: DollarSign },
+    { to: "/superadmin/reports", label: "Reports", icon: FileText },
     // { to: "/superadmin/settings", label: "Settings", icon: Settings },
   ],
 
@@ -42,6 +42,14 @@ export const menuConfig = {
     { to: "/branch/bookings", label: "Bookings", icon: Calendar },
     { to: "/branch/shipments", label: "Shipments", icon: Truck },
     { to: "/branch/employees", label: "Employees", icon: Users },
+    { to: "/branch/customers", label: "Customers", icon: Users },
+    { to: "/branch/reports", label: "Reports", icon: FileText },
+  ],
+
+  "branch-employee": [
+    { to: "/branch/dashboard", label: "Dashboard", icon: Home },
+    { to: "/branch/bookings", label: "Bookings", icon: Calendar },
+    { to: "/branch/shipments", label: "Shipments", icon: Truck },
     { to: "/branch/customers", label: "Customers", icon: Users },
     { to: "/branch/reports", label: "Reports", icon: FileText },
   ],

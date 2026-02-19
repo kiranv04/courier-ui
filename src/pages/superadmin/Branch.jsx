@@ -11,7 +11,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
     name: "",
     code: "",
     address: "",
-    phone_no: "",
+    phone: "",
     email: "",
     location_id: "",
     yield_ratio: "",
@@ -25,7 +25,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
         name: branch?.name || "",
         code: branch?.code || "",
         address: branch?.address || "",
-        phone_no: branch?.phone_no || "",
+        phone: branch?.phone || "",
         email: branch?.email || "",
         location_id: branch?.location_id?.toString() || "",
         yield_ratio: branch?.yield_ratio || "",
@@ -35,7 +35,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
         name: "",
         code: "",
         address: "",
-        phone_no: "",
+        phone: "",
         email: "",
         location_id: "",
         yield_ratio: "",
@@ -57,7 +57,10 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
   });
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.code.trim()) return;
+    if (!form.name.trim() || !form.code.trim() || !form.phone.trim() || !form.yield_ratio.trim() || !form.email.trim()){
+      toast.error("One or more required fields are missing!");
+      return;
+    } 
     const payload = {
       ...form,
     };
@@ -99,12 +102,12 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
-              Phone Number
+              Phone Number <span className="text-red-700">*</span>
             </label>
             <input
               type="text"
-              value={form.phone_no}
-              onChange={(e) => setForm({ ...form, phone_no: e.target.value.toUpperCase() })}
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value})}
               placeholder="Phone Number"
               maxLength={10}
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
@@ -112,12 +115,12 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
-              Email
+              Email <span className="text-red-700">*</span>
             </label>
             <input
               type="text"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value.toUpperCase() })}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="Email"
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
