@@ -16,6 +16,7 @@ import Customers from './pages/superadmin/Customer';
 import { useAuth } from './hooks/useAuth';
 import CreateShipment from './pages/branch/CreateShipment';
 import { Loader2 } from 'lucide-react';
+import Cft from './pages/superadmin/Cft';
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ function AppRoutes() {
 
       <Route element={<DashboardLayout />}>
         <Route path="/superadmin/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/cft" element={user ? <Cft /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/locations" element={user ? <Location /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/branches" element={user ? <Branch /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/branch-users" element={user ? <BranchUser /> : <Navigate to="/login" replace />} />

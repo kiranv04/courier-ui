@@ -215,8 +215,6 @@ export default function Branch() {
     return true;
   });
 
-  console.log("branches", branches);
-
   const { data: locationsData = [] } = useQuery({
     queryKey: ["locations"],
     queryFn: () => api.get("/api/locations").then(res => res.data.data || res.data ||  []),

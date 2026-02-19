@@ -17,14 +17,15 @@ const RateModal = ({ open, onClose, payment, boxes, weight }) => {
   const [dod, setDod] = useState("");
   const [oda, setOda] = useState("");
   const [handling, setHandling] = useState("");
-  const [ecc, setEcc] = useState("");
   const [dcc, setDcc] = useState("");
+  const [pickupcharges, setPickupcharges] = useState("");
+  const [deliverycharges, setDeliverycharges] = useState("");
 
   const [fodDisabled, setFodDiabled] = useState(true);
   const [dodDisabled, setDodDisabled] = useState(true);
 
   useEffect(() => {
-    if(payment === "Normal"){
+    if(payment === "Regular"){
       setFodDiabled(true);
       setDodDisabled(true);
     }else if(payment === "FOD"){
@@ -166,22 +167,32 @@ const RateModal = ({ open, onClose, payment, boxes, weight }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">ECC Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={ecc}
-                    onChange={(e) => setEcc(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium mb-2">DCC Charges</label>
                   <input
                     type="number"
                     placeholder="0.00"
                     value={dcc}
                     onChange={(e) => setDcc(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Pickup Charges</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={pickupcharges}
+                    onChange={(e) => setPickupcharges(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Delivery Charges</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={deliverycharges}
+                    onChange={(e) => setDeliverycharges(e.target.value)}
                     className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
                   />
                 </div>
@@ -513,14 +524,14 @@ export default function CreateShipment() {
                   onChange={(e) => setPaymentMode(e.target.value)}
                   className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="Normal">Normal</option>
+                  <option value="Regular">Regular</option>
                   <option value="FOD">FOD</option>
                   <option value="DOD">DOD</option>
-                  <option value="FOD/DOD">FOD/DOD</option>
+                  <option value="COD">COD</option>
                 </select>
               </div>
             )}
-            {(paymentMode === "DOD" || paymentMode === "FOD/DOD") && (
+            {(paymentMode === "DOD" || paymentMode === "COD") && (
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="block text-sm font-medium mb-2">In Favour Of <span className="text-red-700">*</span></label>
@@ -760,7 +771,6 @@ export default function CreateShipment() {
                 <label className="block text-sm font-medium mb-2">Pincode</label>
                 <div className="relative">
                   <input type="text" placeholder="Pincode" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-                  <Search className="absolute right-3 top-3.5 text-gray-400" size={20} />
                 </div>
               </div>
               <div>
