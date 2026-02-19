@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Edit, Plus, RefreshCw, Filter } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import { useAuth } from "../../hooks/useAuth";
 
 // Reusable Modal
-const UserModal = ({ isOpen, onClose, user = null }) => {
+const UserModal = ({ isOpen, onClose, user = null, branch = null }) => {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -14,6 +15,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
     rel_id: "",
     owner_id: "",
     branch_id: "",
+    role: "",
   });
 
   useEffect(() => {
@@ -31,13 +33,6 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
 // console.log("Rendering UserModal with user:", user);
   const queryClient = useQueryClient();
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
-    queryFn: () => api.get("/api/branches").then(res => res.data.data || res.data),
-    select: (data) => data.filter(b => b.is_active),
-    staleTime: Infinity,
-  });
-
   const mutation = useMutation({
     mutationFn: (data) =>
       user
@@ -52,7 +47,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
   });
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.email.trim() || !form.branch_id){
+    if (!form.name.trim() || !form.email.trim()){
 			toast.error("One or more required field is missing");
 			return;
 		} 
@@ -68,10 +63,10 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
     const payload = {
       name: form.name.trim(),
       email: form.email.trim(),
-      role: "branch-admin",
+      role: form.role.trim(),
       owner_type: "App\\Models\\Branch",
-      owner_id: Number(form.branch_id),
-      rel_id: Number(form.branch_id),
+      owner_id: Number(branch),
+      rel_id: Number(branch),
       rel_type: "branch",
     };
     if (form.password) {
@@ -122,14 +117,13 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
             </>
           )}
           <select
-            value={form.branch_id}
-            onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
             className="w-full px-4 py-3 border rounded-lg"
           >
-            <option value="">Select Branch</option>
-            {branches.map(b => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
+            <option value="">Select User Role</option>
+            <option value="branch-employee">Employee</option>
+            <option value="branch-delivery">Delivery Agent</option>
           </select>
         </div>
         <div className="flex gap-3 mt-6">
@@ -251,31 +245,31 @@ export default function BranchEmployee() {
 
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ["branch-users"],
-    queryFn: () => api.get("/api/users?role=branch-admin").then(res => res.data.data || res.data),
+  const { data: branchAdmin } = useAuth();
+
+  const branchId = branchAdmin.owner_id;
+
+  const { data: branch } = useQuery({
+    queryKey: ["branch", branchId],
+    queryFn: () => api.get(`/api/branches/${branchId}`).then(res => res.data),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: employees, isLoading } = useQuery({
+    queryKey: ["branch-employees", branchId],
+    queryFn: () => api.get(`/api/users/branch/${branchId}`).then(res => res.data.data || res.data),
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
-    queryFn: () => api.get("/api/branches").then(res => res.data.data || res.data),
-    staleTime: Infinity,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
-
-	const branchMap = {};
-	branches.forEach(branch => {
-		if (branch?.id && branch?.name) {
-			branchMap[branch.id] = branch.name;
-		}
-	});
-
-  const filteredUsers = users.filter(u => {
+  const employeesData = Array.isArray(employees) ? employees : [];
+  
+  const filteredUsers = employeesData.filter(u => {
     if (filter === "active") return u.is_active;
     if (filter === "inactive") return !u.is_active;
     return true;
@@ -284,7 +278,7 @@ export default function BranchEmployee() {
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/api/users/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["branch-users"]);
+      queryClient.invalidateQueries(["branch-employees"]);
       toast.success("User deleted");
       setConfirmModal({ open: false });
     },
@@ -293,7 +287,7 @@ export default function BranchEmployee() {
   const reactivateMutation = useMutation({
     mutationFn: (id) => api.post(`/api/users/${id}/activate`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["branch-users"]);
+      queryClient.invalidateQueries(["branch-employees"]);
       toast.success("User reactivated");
       setConfirmModal({ open: false });
     },
@@ -349,7 +343,7 @@ export default function BranchEmployee() {
                 <tr key={u.id} className="border-t hover:bg-gray-50">
                   <td className="p-4 font-medium">{u.name}</td>
                   <td className="p-4">{u.email}</td>
-                  <td className="p-4">{branchMap[u.owner_id] || "-"}</td>
+                  <td className="p-4">{u.roles[0].name.toUpperCase()}</td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${u.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
                       {u.is_active ? "Active" : "Inactive"}
@@ -385,7 +379,7 @@ export default function BranchEmployee() {
         </div>
       )}
 
-      <UserModal isOpen={modalOpen} onClose={() => setModalOpen(false)} user={editingUser} />
+      <UserModal isOpen={modalOpen} onClose={() => setModalOpen(false)} user={editingUser} branch={branchId} />
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ open: false })}

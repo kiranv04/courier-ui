@@ -11,7 +11,7 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
     name: "",
     code: "",
     address: "",
-    phone_no: "",
+    phone: "",
     email: "",
     location_id: "",
   });
@@ -24,7 +24,7 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
         name: warehouse?.name || "",
         code: warehouse?.code || "",
         address: warehouse?.address || "",
-        phone_no: warehouse?.phone_no || "",
+        phone: warehouse?.phone_no || "",
         email: warehouse?.email || "",
         location_id: warehouse?.location_id?.toString() || "",
       });
@@ -33,7 +33,7 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
         name: "",
         code: "",
         address: "",
-        phone_no: "",
+        phone: "",
         email: "",
         location_id: "",
       });
@@ -47,7 +47,7 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
         : api.post("/api/warehouses", data),
     onSuccess: () => {
       queryClient.invalidateQueries(["warehouses"]);
-      toast.success(warehouse ? "Warehouse updated!" : "Warehouse created!");
+      toast.success(warehouse ? "Transithub updated!" : "Transithub created!");
       onClose();
     },
     onError: () => toast.error("Something went wrong"),
@@ -67,7 +67,7 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-7xl my-8 max-h-[90vh] overflow-y-auto w-full">
         <h2 className="text-2xl font-bold mb-6">
-          {warehouse ? "Edit Warehouse" : "Add New Warehouse"}
+          {warehouse ? "Edit Transithub" : "Add New Transithub"}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -78,7 +78,7 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Warehouse name"
+              placeholder="Transithub name"
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -100,8 +100,8 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
             </label>
             <input
               type="text"
-              value={form.phone_no}
-              onChange={(e) => setForm({ ...form, phone_no: e.target.value.toUpperCase() })}
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value.toUpperCase() })}
               placeholder="Phone Number"
               maxLength={10}
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
@@ -214,7 +214,7 @@ export default function Warehouse() {
     mutationFn: (id) => api.delete(`/api/warehouses/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(["warehouses"]);
-      toast.success("Warehouse deleted");
+      toast.success("Transithub deleted");
       setConfirmModal({ open: false });
     },
   });
@@ -223,7 +223,7 @@ export default function Warehouse() {
     mutationFn: (id) => api.post(`/api/warehouses/${id}/activate`),
     onSuccess: () => {
       queryClient.invalidateQueries(["warehouses"]);
-      toast.success("Warehouse reactivated");
+      toast.success("Transithub reactivated");
       setConfirmModal({ open: false });
     },
   });
@@ -231,7 +231,7 @@ export default function Warehouse() {
   return (
     <div className="p-8 bg-white rounded-2xl shadow-2xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Warehouses</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Transithubs</h1>
         <button
           onClick={() => {
             setEditingWarehouse(null);
@@ -240,7 +240,7 @@ export default function Warehouse() {
           className="bg-linear-to-r from-blue-500 to-teal-300 text-black cursor-pointer px-6 py-3 rounded-lg hover:opacity-90 flex items-center gap-2 transition"
         >
           <Plus size={20} />
-          Add Warehouse
+          Add Transithub
         </button>
       </div>
 
@@ -262,14 +262,14 @@ export default function Warehouse() {
 
       {/* Table */}
       {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Loading warehouses...</div>
+        <div className="text-center py-12 text-gray-500">Loading transithub...</div>
       ) : filteredWarehouses.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border text-center py-16">
           <p className="text-gray-500 text-lg">Nothing to show here</p>
           <p className="text-gray-400 text-sm mt-2">
-            {filter === "active" && "No active warehouses"}
-            {filter === "inactive" && "No inactive warehouses"}
-            {filter === "all" && "No warehouses found"}
+            {filter === "active" && "No active transithub"}
+            {filter === "inactive" && "No inactive transithub"}
+            {filter === "all" && "No transithub found"}
           </p>
         </div>
       ) : (
@@ -344,7 +344,7 @@ export default function Warehouse() {
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ open: false })}
-        title={confirmModal.action === "delete" ? "Delete Warehouse?" : "Reactivate Warehouse?"}
+        title={confirmModal.action === "delete" ? "Delete Transithub?" : "Reactivate Transithub?"}
         onConfirm={() => {
           if (confirmModal.action === "delete") {
             deleteMutation.mutate(confirmModal.warehouse.id);

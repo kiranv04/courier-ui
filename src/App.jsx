@@ -46,8 +46,8 @@ function AppRoutes() {
         <Route path="/superadmin/locations" element={user ? <Location /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/branches" element={user ? <Branch /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/branch-users" element={user ? <BranchUser /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/warehouses" element={user ? <Warehouse /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/warehouse-users" element={user ? <WarehouseUser /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/transithub" element={user ? <Warehouse /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/transithub-users" element={user ? <WarehouseUser /> : <Navigate to="/login" replace />} />
         <Route path="/branch/dashboard" element={user ? <BranchDashboard /> : <Navigate to="/login" replace />} />
         <Route path="/branch/employees" element={user ? <BranchEmployee /> : <Navigate to="/login" replace />} />
         <Route path="/branch/customers" element={user ? <Customers /> : <Navigate to="/login" replace />} />
