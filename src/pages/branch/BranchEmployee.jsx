@@ -30,7 +30,7 @@ const UserModal = ({ isOpen, onClose, user = null, branch = null }) => {
       });
     }
   }, [isOpen, user]);
-// console.log("Rendering UserModal with user:", user);
+
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
