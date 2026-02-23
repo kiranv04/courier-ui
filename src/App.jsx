@@ -17,6 +17,7 @@ import { useAuth } from './hooks/useAuth';
 import CreateShipment from './pages/branch/CreateShipment';
 import { Loader2 } from 'lucide-react';
 import Cft from './pages/superadmin/Cft';
+import WarehouseEmployee from './pages/warehouse/WarehouseEmployee';
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/branch/customers" element={user ? <Customers /> : <Navigate to="/login" replace />} />
         <Route path="/branch/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />
+        <Route path="/warehouse/employees" element={user ? <WarehouseEmployee /> : <Navigate to="/login" replace />} />
       </Route>
     </Routes>
   );
