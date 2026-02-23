@@ -92,8 +92,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   
   useEffect(() => {
     if (customer) {
-      // Edit mode: pre-fill all fields from the selected customer
-      setType(customer.type || "Individual");
+      setType(customer.type || "individual");
       setCustomerType(customer.customer_type || "cash");
 
       // Billing / main fields (adjust field names to match your backend response)
@@ -231,7 +230,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   });
 
   const checkRequiredFields = () => {
-    if (type === "Individual") {
+    if (type === "individual") {
       if (!billName.trim()) throw new Error("Billing name is required");
       if (!aadhaarNumber.trim()) throw new Error("Aadhaar number is required");
     } else {
@@ -335,8 +334,8 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
               <input
                 type="radio"
                 name="type"
-                checked={type === "Individual"}
-                onChange={() => setType("Individual")}
+                checked={type === "individual"}
+                onChange={() => setType("individual")}
                 className="w-5 h-5 accent-blue-600"
               />
               Individual
@@ -345,8 +344,8 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
               <input
                 type="radio"
                 name="type"
-                checked={type === "Company"}
-                onChange={() => setType("Company")}
+                checked={type === "company"}
+                onChange={() => setType("company")}
                 className="w-5 h-5 accent-blue-600"
               />
               Company
@@ -359,7 +358,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
           <h3 className="text-xl font-semibold mb-4 text-teal-700">KYC Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Aadhaar - only Individual */}
-            {type === "Individual" && (
+            {type === "individual" && (
               <div>
                 <label className="block text-sm font-medium mb-2">Aadhaar number <span className="text-red-700">*</span></label>
                 <input
@@ -447,7 +446,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
             </div>
 
             {/* GST - only Company */}
-            {type === "Company" && (
+            {type === "company" && (
               <div>
                 <label className="block text-sm font-medium mb-2">GST number <span className="text-red-700">*</span></label>
                 <input
