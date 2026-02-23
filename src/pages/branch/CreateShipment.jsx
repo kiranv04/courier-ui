@@ -5,9 +5,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "../../services/api";
 import { roundTo2 } from "../../utils/money";
 import { set } from "react-hook-form";
+import { replace, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceType, savedRates, onSave }) => {
-  const [cft, setCft] = useState(6);
+  const [cft, setCft] = useState('');
   const [freight, setFreight] = useState(100);
   const [fuel, setFuel] = useState(0.00);
   const [awbFee, setAwbFee] = useState("");
@@ -34,6 +36,20 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
   const [gst, setGst] = useState(0.00);
   const [grandTotal, setGrandTotal] = useState(0.00);
 
+  // Fetch state mapping
+  const { data: rawCfts = [] } = useQuery({
+		queryKey: ["cfts"],
+		queryFn: () => api.get("/api/cfts").then(res => res.data.data || res.data || []),
+		staleTime: Infinity,
+	});
+
+	const cftMap = {};
+	rawCfts.forEach(cft => {
+		if (cft?.id && cft?.cft_value && cft?.is_active) {
+			cftMap[cft.id] = cft.cft_value;
+		}
+	});
+
   useEffect(() => {
     if (open && savedRates) {
       setCft(savedRates.cft);
@@ -59,6 +75,7 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
       setCftDisabled(true);
     } else{
       volWeightRaw = cft * volWeight;
+      setCftDisabled(false);
     }
     const calculatedVolWeight = roundTo2(volWeightRaw);
     setDisVolWeight(calculatedVolWeight.toFixed(2));
@@ -70,7 +87,7 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
     const yieldRaw = transportCharge / chargable;
     const yieldValue = roundTo2(yieldRaw);
     setPackageYield(yieldValue.toFixed(2));
-  }, [cft, volWeight, freight, weight, fuel]);
+  }, [cft, volWeight, freight, weight, fuel, serviceType]);
 
   useEffect(() => {
     const charges = [
@@ -160,11 +177,9 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
                 <div>
                   <label className="block text-sm font-medium mb-2">CFT</label>
                   <select value={cft} disabled={cftDisabled} onChange={(e) => setCft(e.target.value)} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${cftDisabled ? 'bg-gray-200' : ''}`}>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
+                    {Object.entries(cftMap).map(([id, name]) => (
+                      <option key={id} value={id}>{name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -333,6 +348,8 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
 };
 
 export default function CreateShipment() {
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useAuth();
   const [boxesCount, setBoxesCount] = useState(1);
   const [weight, setWeight] = useState("");
   const [invoices, setInvoices] = useState([
@@ -504,6 +521,12 @@ export default function CreateShipment() {
     mutationFn: (data) => api.post("/api/shipments", data),
     onSuccess: () => {
       toast.success("Shipment saved!");
+
+      if(user.roles[0]?.name === 'super-admin' || user.roles[0]?.name === 'admin'){
+        navigate('/superadmin/bookings', { replace: true });
+      }else if(user.roles[0]?.name === 'branch-admin' || user.roles[0]?.name === 'branch-employee'){
+        navigate('/branch/bookings', { replace: true });
+      }
     },
   });
 
@@ -512,19 +535,35 @@ export default function CreateShipment() {
       toast.error("E-Way Bill is mandatory for invoices of ₹50,000 or more");
       return;
     }
-    const payload = {
-      status,
-      shipper: { shipperName, shipperCompany, shipperPhone, shipperAddLine1, shipperAddLine2, shipperAddCity, shipperState, shipperPincode, shipperGst },
-      service: { serviceType, service, customerRef, parcelContent, trackingNumber, paymentMode },
-      parcels,
-      invoices,
-      rates: savedRates,
-      customer: { customerId, customerType },
-      specialInstruction: specialInstruction.trim() ? specialInstruction : null,
-      consignee: { consigneeName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeGst },
-      docDimensions: { length: docLength, width: docWidth, height: docHeight, weight: docWeight },
-      dodCodDetails: { inFavour, payableAt, collectableAmount }
-    };
+
+    let payload = {};
+    
+    if (service === "Parcel"){
+      payload = {
+        status,
+        shipper: { shipperName, shipperCompany, shipperPhone, shipperAddLine1, shipperAddLine2, shipperAddCity, shipperState, shipperPincode, shipperGst },
+        service: { serviceType, service, customerRef, parcelContent, trackingNumber, paymentMode },
+        parcels,
+        invoices,
+        rates: savedRates,
+        customer: { customerId, customerType },
+        specialInstruction: specialInstruction.trim() ? specialInstruction : null,
+        consignee: { consigneeName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeGst },
+        dodCodDetails: { inFavour, payableAt, collectableAmount }
+      };
+    } else{
+      payload = {
+        status,
+        shipper: { shipperName, shipperCompany, shipperPhone, shipperAddLine1, shipperAddLine2, shipperAddCity, shipperState, shipperPincode, shipperGst },
+        service: { serviceType, service, customerRef, parcelContent, trackingNumber, paymentMode },
+        customer: { customerId, customerType },
+        specialInstruction: specialInstruction.trim() ? specialInstruction : null,
+        consignee: { consigneeName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeGst },
+        docDimensions: { length: docLength, width: docWidth, height: docHeight, weight: docWeight },
+        dodCodDetails: { inFavour, payableAt, collectableAmount }
+      };
+    }
+    
     saveMutation.mutate(payload);
   };
 
@@ -538,7 +577,6 @@ export default function CreateShipment() {
     setDocWidth("10");
     setDocHeight("10");
     setDocWeight("0.1");
-    setPaymentSpecial("Normal");
     toast.success("Form cleared");
   };
 
