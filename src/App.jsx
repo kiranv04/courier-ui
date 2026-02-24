@@ -18,6 +18,8 @@ import CreateShipment from './pages/branch/CreateShipment';
 import { Loader2 } from 'lucide-react';
 import Cft from './pages/superadmin/Cft';
 import WarehouseEmployee from './pages/warehouse/WarehouseEmployee';
+import BranchBookings from './pages/branch/BranchBookings';
+import AdminBookings from './pages/superadmin/AdminBookings';
 
 const queryClient = new QueryClient();
 
@@ -51,8 +53,10 @@ function AppRoutes() {
         <Route path="/superadmin/branch-users" element={user ? <BranchUser /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/transithub" element={user ? <Warehouse /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/transithub-users" element={user ? <WarehouseUser /> : <Navigate to="/login" replace />} />
+        <Route path="/superadmin/bookings" element={user ? <AdminBookings /> : <Navigate to="/login" replace />} />
         <Route path="/branch/dashboard" element={user ? <BranchDashboard /> : <Navigate to="/login" replace />} />
         <Route path="/branch/employees" element={user ? <BranchEmployee /> : <Navigate to="/login" replace />} />
+        <Route path="/branch/bookings" element={user ? <BranchBookings /> : <Navigate to="/login" replace />} />
         <Route path="/branch/customers" element={user ? <Customers /> : <Navigate to="/login" replace />} />
         <Route path="/branch/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />
         <Route path="/superadmin/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />

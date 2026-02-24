@@ -32,7 +32,7 @@ export const menuConfig = {
     },
     { to: "/branch/customers", label: "Customers", icon: Users },
     { to: "/branch/shipments", label: "Shipments", icon: Truck },
-    { to: "/superadmin/billing", label: "Billing", icon: DollarSign },
+    { to: "/superadmin/bookings", label: "Bookings", icon: DollarSign },
     { to: "/superadmin/reports", label: "Reports", icon: FileText },
     // { to: "/superadmin/settings", label: "Settings", icon: Settings },
   ],
