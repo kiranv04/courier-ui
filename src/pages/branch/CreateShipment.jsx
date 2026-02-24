@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "../../services/api";
 import { roundTo2 } from "../../utils/money";
 import { set } from "react-hook-form";
-import { replace, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceType, savedRates, onSave }) => {
@@ -349,6 +349,9 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
 
 export default function CreateShipment() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = !!id;
+
   const { data: user, isLoading } = useAuth();
   const [boxesCount, setBoxesCount] = useState(1);
   const [weight, setWeight] = useState("");
@@ -406,6 +409,96 @@ export default function CreateShipment() {
   const [paymentMode, setPaymentMode] = useState("Regular");
 
   const [savedRates, setSavedRates] = useState(null);
+
+  // Fetch existing shipment if in edit mode
+  const { data: existingShipment, isLoading: loadingShipment } = useQuery({
+    queryKey: ["shipment", id],
+    queryFn: () => api.get(`/api/shipments/${id}`).then(res => res.data.data),
+    enabled: isEditMode,
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (!existingShipment) return;
+    const s = existingShipment;
+
+    setService(s.service);
+    setServiceType(s.service_type || "");
+    setPaymentMode(s.payment_mode || "Regular");
+    setCustomerRef(s.customer_ref || "");
+    setParcelContent(s.parcel_content || "");
+    setTrackingNumber(s.tracking_number || "");
+    setCustomerType(s.customer_type);
+    setCustomerId(s.customer_id?.toString() || "");
+
+    setShipperName(s.shipper_name || "");
+    setShipperCompany(s.shipper_company || "");
+    setShipperPhone(s.shipper_phone || "");
+    setShipperEmail(s.shipper_email || "");
+    setShipperGst(s.shipper_gst || "");
+    setShipperAddLine1(s.shipper_address_line1 || "");
+    setShipperAddLine2(s.shipper_address_line2 || "");
+    setShipperAddCity(s.shipper_city || "");
+    setShipperState(s.shipper_state || "");
+    setShipperPincode(s.shipper_pincode || "");
+
+    setConsigneeName(s.consignee_name || "");
+    setConsigneePhone(s.consignee_phone || "");
+    setConsigneeGst(s.consignee_gst || "");
+    setConsigneeAddLine1(s.consignee_address || "");
+    setConsigneePincode(s.consignee_pincode || "");
+    setConsigneeAddCity(s.consignee_city || "");
+
+    setSpecialInstruction(s.special_instructions || "");
+    setInFavour(s.in_favour_of || "");
+    setPayableAt(s.payable_at || "");
+    setCollectableAmount(s.collectable_amount || "");
+
+    if (s.parcels?.length) {
+      setParcels(s.parcels.map((p, i) => ({
+        id: i + 1,
+        length: p.length,
+        width: p.width,
+        height: p.height,
+        weight: p.weight,
+        numBoxes: p.num_boxes,
+        volWeight: p.vol_weight,
+      })));
+    }
+
+    if (s.invoices?.length) {
+      setInvoices(s.invoices.map((inv, i) => ({
+        id: i + 1,
+        invoiceNumber: inv.invoice_number,
+        invoiceAmount: inv.invoice_amount,
+        ewayBill: inv.eway_bill || "",
+      })));
+    }
+
+    if (s.charges) {
+      setSavedRates({
+        cft: s.charges.cft,
+        freight: s.charges.freight,
+        fuel: s.charges.fuel,
+        awbFee: s.charges.awb_fee,
+        fov: s.charges.fov,
+        fod: s.charges.fod,
+        dod: s.charges.dod,
+        oda: s.charges.oda,
+        handling: s.charges.handling,
+        dcc: s.charges.dcc,
+        pickupcharges: s.charges.pickup_charges,
+        deliverycharges: s.charges.delivery_charges,
+        insurance: s.charges.insurance_type,
+        carrierInsurance: s.charges.carrier_insurance,
+        chargeableWeight: s.charges.chargeable_weight,
+        packageYield: s.charges.package_yield,
+        total: s.charges.total,
+        gst: s.charges.gst,
+        grandTotal: s.charges.grand_total,
+      });
+    }
+  }, [existingShipment]);
 
   const { data : customers = [] } = useQuery({
     queryKey: ["customers", customerType],
@@ -517,6 +610,20 @@ export default function CreateShipment() {
     });
   };
 
+  // Update mutation for edit mode
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => api.patch(`/api/shipments/${id}`, data),
+    onSuccess: (_, variables) => {
+      toast.success(variables.data.status === "booked" ? "Shipment booked!" : "Shipment updated!");
+      if(user.roles[0]?.name === 'super-admin' || user.roles[0]?.name === 'admin'){
+        navigate('/superadmin/bookings', { replace: true });
+      }else if(user.roles[0]?.name === 'branch-admin' || user.roles[0]?.name === 'branch-employee'){
+        navigate('/branch/bookings', { replace: true });
+      } 
+    },
+    onError: () => toast.error("Failed to update shipment"),
+  });
+
   const saveMutation = useMutation({
     mutationFn: (data) => api.post("/api/shipments", data),
     onSuccess: () => {
@@ -564,7 +671,11 @@ export default function CreateShipment() {
       };
     }
     
-    saveMutation.mutate(payload);
+    if (isEditMode) {
+      updateMutation.mutate({ id, data: payload });
+    } else {
+      saveMutation.mutate(payload);
+    }
   };
 
   const handleClear = () => {
