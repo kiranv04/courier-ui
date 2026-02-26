@@ -30,8 +30,8 @@ export const menuConfig = {
         { to: "/superadmin/transithub-users", label: "Transit Hub Users" },
       ]
     },
-    { to: "/branch/customers", label: "Customers", icon: Users },
-    { to: "/branch/shipments", label: "Shipments", icon: Truck },
+    { to: "/superadmin/customers", label: "Customers", icon: Users },
+    { to: "/superadmin/shipments", label: "Shipments", icon: Truck },
     { to: "/superadmin/bookings", label: "Bookings", icon: DollarSign },
     { to: "/superadmin/reports", label: "Reports", icon: FileText },
     // { to: "/superadmin/settings", label: "Settings", icon: Settings },
