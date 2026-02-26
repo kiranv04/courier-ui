@@ -14,12 +14,15 @@ import BranchDashboard from './pages/branch/BranchDashboard';
 import BranchEmployee from './pages/branch/BranchEmployee';
 import Customers from './pages/superadmin/Customer';
 import { useAuth } from './hooks/useAuth';
-import CreateShipment from './pages/branch/CreateShipment';
+import CreateShipment from './pages/shared/CreateShipment';
 import { Loader2 } from 'lucide-react';
 import Cft from './pages/superadmin/Cft';
 import WarehouseEmployee from './pages/warehouse/WarehouseEmployee';
 import BranchBookings from './pages/branch/BranchBookings';
 import AdminBookings from './pages/superadmin/AdminBookings';
+import ProtectedRoute from './components/ProtectedRoute';
+import { ROLE_HOME } from './config/roleConfig';
+import ShipmentView from './pages/shared/ShipmentView';
 
 const queryClient = new QueryClient();
 
@@ -39,28 +42,55 @@ function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route 
           path="/login" 
-          element={user ? <Navigate to="/superadmin/dashboard" replace /> : <Login />} 
+          element={user ? <Navigate to={ROLE_HOME[user.roles?.[0]?.name] || "/login"} replace /> : <Login />} 
         />
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
-      <Route element={<DashboardLayout />}>
-        <Route path="/superadmin/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/cft" element={user ? <Cft /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/locations" element={user ? <Location /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/branches" element={user ? <Branch /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/branch-users" element={user ? <BranchUser /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/transithub" element={user ? <Warehouse /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/transithub-users" element={user ? <WarehouseUser /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/bookings" element={user ? <AdminBookings /> : <Navigate to="/login" replace />} />
-        <Route path="/branch/dashboard" element={user ? <BranchDashboard /> : <Navigate to="/login" replace />} />
-        <Route path="/branch/employees" element={user ? <BranchEmployee /> : <Navigate to="/login" replace />} />
-        <Route path="/branch/bookings" element={user ? <BranchBookings /> : <Navigate to="/login" replace />} />
-        <Route path="/branch/customers" element={user ? <Customers /> : <Navigate to="/login" replace />} />
-        <Route path="/branch/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />
-        <Route path="/superadmin/shipments" element={user ? <CreateShipment /> : <Navigate to="/login" replace />} />
-        <Route path="/warehouse/employees" element={user ? <WarehouseEmployee /> : <Navigate to="/login" replace />} />
+      {/* Super-admin/Admin routes */}
+      <Route element={<ProtectedRoute allowedRoles={["super-admin", "admin"]} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/superadmin/dashboard" element={<Dashboard />} />
+          
+          <Route path="/superadmin/locations" element={<Location />} />
+          <Route path="/superadmin/cft" element={<Cft />} />
+
+          <Route path="/superadmin/branches" element={<Branch />} />
+          <Route path="/superadmin/branch-users" element={<BranchUser />} />
+
+          <Route path="/superadmin/transithub" element={<Warehouse /> } />
+          <Route path="/superadmin/transithub-users" element={<WarehouseUser />} />
+          
+          <Route path="/superadmin/bookings" element={<AdminBookings />} />
+
+          <Route path="/superadmin/shipments" element={<CreateShipment />} />
+          <Route path="/superadmin/shipments/:id" element={<ShipmentView />} />
+        </Route>
+      </Route>
+
+      {/* Branch routes */}
+      <Route element={<ProtectedRoute allowedRoles={["branch-admin", "branch-employee"]} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/branch/dashboard" element={<BranchDashboard />} />
+
+          <Route path="/branch/employees" element={<BranchEmployee />} />
+
+          <Route path="/branch/bookings" element={<BranchBookings /> } />
+
+          <Route path="/branch/customers" element={<Customers /> } />
+
+          <Route path="/branch/shipments" element={<CreateShipment />} />
+          <Route path="/branch/shipments/:id" element={<ShipmentView />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={["warehouse-admin"]} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/warehouse/dashboard" element={<BranchDashboard />} />
+          <Route path="/warehouse/employees" element={<WarehouseEmployee />} />
+          <Route path="/warehouse/bookings" element={<BranchBookings /> } />
+        </Route>
       </Route>
     </Routes>
   );

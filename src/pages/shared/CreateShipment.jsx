@@ -353,11 +353,16 @@ export default function CreateShipment() {
   const isEditMode = !!id;
 
   const { data: user } = useAuth();
-  const isSuperAdmin = user?.roles?.[0]?.name === "super-admin";
+  const isSuperAdmin = user?.roles?.[0]?.name === "super-admin" || user?.roles?.[0]?.name === "admin";
 
-  const [selectedBranchId, setSelectedBranchId] = useState(
-    isSuperAdmin ? "" : user?.owner_id
-  );
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    if (!isSuperAdmin) {
+      setSelectedBranchId(user.owner_id?.toString() || "");
+    }
+  }, [user]);
 
   const [boxesCount, setBoxesCount] = useState(1);
   const [weight, setWeight] = useState("");
