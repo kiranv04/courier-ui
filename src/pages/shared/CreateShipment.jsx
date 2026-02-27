@@ -687,12 +687,17 @@ export default function CreateShipment() {
       return;
     }
 
+    if (!selectedBranchId) {
+      toast.error("Branch not resolved. Please try again.");
+      return;
+    }
+
     let payload = {};
     
     if (service === "Parcel"){
       payload = {
         status,
-        ...(isSuperAdmin && { branchId: selectedBranchId }),
+        ...(isSuperAdmin && { branchId: Number(selectedBranchId), }),
         shipper: { shipperName, shipperCompany, shipperPhone, shipperAddLine1, shipperAddLine2, shipperAddCity, shipperState, shipperPincode, shipperGst },
         service: { serviceType, service, customerRef, parcelContent, trackingNumber, paymentMode },
         parcels,
