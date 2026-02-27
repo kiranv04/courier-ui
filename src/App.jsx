@@ -12,7 +12,7 @@ import Warehouse from './pages/superadmin/Warehouse';
 import WarehouseUser from './pages/superadmin/WarehouseUser';
 import BranchDashboard from './pages/branch/BranchDashboard';
 import BranchEmployee from './pages/branch/BranchEmployee';
-import Customers from './pages/superadmin/Customer';
+import Customers from './pages/shared/Customer';
 import { useAuth } from './hooks/useAuth';
 import CreateShipment from './pages/shared/CreateShipment';
 import { Loader2 } from 'lucide-react';
@@ -58,6 +58,8 @@ function AppRoutes() {
 
           <Route path="/superadmin/branches" element={<Branch />} />
           <Route path="/superadmin/branch-users" element={<BranchUser />} />
+
+          <Route path="/superadmin/customers" element={<Customers /> } />
 
           <Route path="/superadmin/transithub" element={<Warehouse /> } />
           <Route path="/superadmin/transithub-users" element={<WarehouseUser />} />

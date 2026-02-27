@@ -1,9 +1,220 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Edit, FileText, Package, Truck, FileCheck } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Package, Truck, FileCheck, X } from "lucide-react";
 import api from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
 import { formatDate, formatDateTime } from "../../utils/format";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+
+// ── Toggle (same as PrintConfigPanel) ────────────────────────────────────────
+function Toggle({ checked, onChange, disabled = false }) {
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+        ${checked ? "bg-teal-500" : "bg-gray-300"}
+        ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+      `}
+    >
+      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+        ${checked ? "translate-x-6" : "translate-x-1"}
+      `} />
+    </button>
+  );
+}
+
+const TOGGLE_GROUPS = [
+  {
+    label: "Shipper",
+    fields: [
+      { key: "show_shipper_details", label: "Shipper Details" },
+      { key: "show_shipper_gst",     label: "Shipper GST Number" },
+    ],
+  },
+  {
+    label: "Consignee",
+    fields: [
+      { key: "show_consignee_details", label: "Consignee Details" },
+      { key: "show_consignee_gst",     label: "Consignee GST Number" },
+    ],
+  },
+  {
+    label: "Shipment Info",
+    fields: [
+      { key: "show_parcel_dimensions",    label: "Parcel Dimensions" },
+      { key: "show_special_instructions", label: "Special Instructions" },
+    ],
+  },
+  {
+    label: "Documents",
+    fields: [
+      { key: "show_invoice_details", label: "Invoice Details" },
+      { key: "show_eway_bill",       label: "E-Way Bill Number" },
+    ],
+  },
+  {
+    label: "Charges",
+    fields: [
+      { key: "show_charges_breakdown", label: "Full Charges Breakdown" },
+      { key: "show_grand_total_only",  label: "Grand Total Only" },
+    ],
+  },
+];
+
+const SOURCE_LABELS = {
+  override: { text: "Using shipment override",  style: "bg-yellow-100 text-yellow-800" },
+  customer: { text: "Using customer config",    style: "bg-blue-100 text-blue-700" },
+  default:  { text: "Using default template",   style: "bg-gray-100 text-gray-600" },
+};
+
+// ── Print Options Modal ───────────────────────────────────────────────────────
+function PrintOptionsModal({ isOpen, onClose, shipmentId }) {
+  const [config, setConfig] = useState(null);
+  const [originalConfig, setOriginalConfig] = useState(null);
+  const [source, setSource] = useState("default");
+
+  // Fetch effective config when modal opens
+  const { data, isLoading } = useQuery({
+    queryKey: ["shipment-print-config", shipmentId],
+    queryFn: () =>
+      api.get(`/api/shipments/${shipmentId}/print-config`).then(res => res.data),
+    enabled: isOpen && !!shipmentId,
+    staleTime: 0, // Always re-fetch — config could have changed
+  });
+
+  useEffect(() => {
+    if (!data) return;
+    setConfig({ ...data.data });
+    setOriginalConfig({ ...data.data });
+    setSource(data.source);
+  }, [data]);
+
+  const isDirty = config && originalConfig &&
+    Object.keys(config).some(k => config[k] !== originalConfig[k]);
+
+  const overrideMutation = useMutation({
+    mutationFn: (payload) =>
+      api.post(`/api/shipments/${shipmentId}/print-override`, payload),
+  });
+
+  const handleToggle = (key, value) => {
+    setConfig(prev => {
+      const next = { ...prev, [key]: value };
+      if (key === "show_grand_total_only" && value)   next.show_charges_breakdown = false;
+      if (key === "show_charges_breakdown" && value)  next.show_grand_total_only = false;
+      if (key === "show_shipper_details" && !value)   next.show_shipper_gst = false;
+      if (key === "show_consignee_details" && !value) next.show_consignee_gst = false;
+      if (key === "show_invoice_details" && !value)   next.show_eway_bill = false;
+      return next;
+    });
+  };
+
+  const isFieldDisabled = (key) => {
+    if (!config) return false;
+    if (key === "show_shipper_gst"   && !config.show_shipper_details)   return true;
+    if (key === "show_consignee_gst" && !config.show_consignee_details) return true;
+    if (key === "show_eway_bill"     && !config.show_invoice_details)   return true;
+    return false;
+  };
+
+  const handlePrint = async () => {
+    try {
+      // Save override only if user changed something
+      if (isDirty) {
+        await overrideMutation.mutateAsync(config);
+      }
+      // Open PDF in new tab
+      window.open(
+        `${import.meta.env.VITE_BASE_URL}/api/shipments/${shipmentId}/pdf`,
+        "_blank"
+      );
+      onClose();
+    } catch {
+      toast.error("Failed to save override");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const sourceInfo = SOURCE_LABELS[source] || SOURCE_LABELS.default;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-16">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 md:p-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-bold text-gray-900">Print Options</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 cursor-pointer">
+            <X size={22} />
+          </button>
+        </div>
+
+        {/* Source badge */}
+        <div className="mb-6">
+          <span className={`text-xs px-3 py-1 rounded-full font-medium ${sourceInfo.style}`}>
+            {sourceInfo.text}
+          </span>
+          {isDirty && (
+            <span className="ml-2 text-xs px-3 py-1 rounded-full font-medium bg-orange-100 text-orange-700">
+              Modified — will save as shipment override
+            </span>
+          )}
+        </div>
+
+        {isLoading || !config ? (
+          <div className="py-12 text-center text-gray-400">Loading config...</div>
+        ) : (
+          <>
+            {/* Toggle groups */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {TOGGLE_GROUPS.map(group => (
+                <div key={group.label}>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    {group.label}
+                  </p>
+                  <div className="space-y-3">
+                    {group.fields.map(field => (
+                      <div key={field.key} className="flex items-center justify-between">
+                        <label className={`text-sm ${isFieldDisabled(field.key) ? "text-gray-400" : "text-gray-700"}`}>
+                          {field.label}
+                        </label>
+                        <Toggle
+                          checked={!!config[field.key]}
+                          onChange={val => handleToggle(field.key, val)}
+                          disabled={isFieldDisabled(field.key)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t">
+              <button
+                onClick={handlePrint}
+                disabled={overrideMutation.isPending}
+                className="flex-1 flex items-center justify-center gap-2 bg-linear-to-r from-teal-600 to-green-500 text-white py-3 rounded-lg hover:opacity-90 disabled:opacity-50 cursor-pointer transition"
+              >
+                <FileText size={18} />
+                {overrideMutation.isPending ? "Saving..." : "Print"}
+              </button>
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-200 py-3 rounded-lg hover:bg-gray-300 cursor-pointer transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const STATUS_COLORS = {
   draft:            "bg-gray-100 text-gray-600",
@@ -52,6 +263,7 @@ function LabelValue({ label, value }) {
 }
 
 export default function ShipmentView() {
+  const [printModalOpen, setPrintModalOpen] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: user } = useAuth();
@@ -73,11 +285,6 @@ export default function ShipmentView() {
 
   const handleEdit = () => {
     navigate(`/branch/shipments/${id}/edit`);
-  };
-
-  const handlePrint = () => {
-    // placeholder — PDF endpoint to be built
-    toast.info("PDF generation coming soon");
   };
 
   if (isLoading) {
@@ -122,7 +329,7 @@ export default function ShipmentView() {
             </button>
           )}
           <button
-            onClick={handlePrint}
+            onClick={() => setPrintModalOpen(true)}
             className="flex items-center gap-2 bg-linear-to-r from-teal-600 to-green-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
           >
             <FileText size={18} />
@@ -361,6 +568,11 @@ export default function ShipmentView() {
           </div>
         )}
       </Section>
+      <PrintOptionsModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        shipmentId={id}
+      />
     </div>
   );
 }

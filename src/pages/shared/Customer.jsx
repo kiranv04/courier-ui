@@ -1,16 +1,32 @@
 import { useEffect, useState } from "react";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  RefreshCw,
-  Filter,
-  Camera,
-  X,
-} from "lucide-react";
+import { Plus, Edit, Trash2, RefreshCw, Filter, Camera, X, Settings2, } from "lucide-react";
 import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api";
+import PrintConfigPanel from "../../components/PrintConfigPanel";
+
+// ── Print Config Modal ────────────────────────────────────────────────────────
+const PrintConfigModal = ({ isOpen, onClose, customer }) => {
+  if (!isOpen || !customer) return null;
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-16">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 md:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">
+            Print Config — {customer.company_name || customer.name}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 transition cursor-pointer"
+          >
+            <X size={22} />
+          </button>
+        </div>
+        <PrintConfigPanel customer={customer} />
+      </div>
+    </div>
+  );
+};
 
 const ConfirmModal = ({ isOpen, onClose, title, onConfirm, loading }) => {
   if (!isOpen) return null;
@@ -43,7 +59,6 @@ const ConfirmModal = ({ isOpen, onClose, title, onConfirm, loading }) => {
 const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const isEdit = !!customer;
 
-  // Form state
   const [type, setType] = useState("Individual");
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -66,7 +81,6 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const [billCompany, setBillCompany] = useState("");
   const [billLine1, setBillLine1] = useState("");
   const [billLine2, setBillLine2] = useState("");
-  // const [billLine3, setBillLine3] = useState("");
   const [billCity, setBillCity] = useState("");
   const [billPincode, setBillPincode] = useState("");
   const [billPhone, setBillPhone] = useState("");
@@ -80,7 +94,6 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const [shipCompany, setShipCompany] = useState("");
   const [shipLine1, setShipLine1] = useState("");
   const [shipLine2, setShipLine2] = useState("");
-  // const [shipLine3, setShipLine3] = useState("");
   const [shipCity, setShipCity] = useState("");
   const [shipPincode, setShipPincode] = useState("");
   const [shipPhone, setShipPhone] = useState("");
@@ -95,14 +108,14 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
       setType(customer.type || "individual");
       setCustomerType(customer.customer_type || "cash");
 
-      // Billing / main fields (adjust field names to match your backend response)
+      // Billing / main fields
       setName(customer.name || "");
       setCompanyName(customer.company_name || "");
       setAadhaarNumber(customer.aadhar_number || "");
       setPanNumber(customer.pan_number || "");
       setGstNumber(customer.gst_number || "");
 
-      // Billing address (adjust keys to match your API response structure)
+      // Billing address
       setBillName(customer.billing_name || "");
       setBillCompany(customer.billing_company_name || "");
       setBillLine1(customer.billing_address_line1 || "");
@@ -129,7 +142,6 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
         setShipGst(customer.shipping_gst_number || "");
       } else {
         setSameAddress(true);
-        // Optional: clear shipping fields when same address
         setShipName("");
         setShipCompany("");
         setShipLine1("");
@@ -141,9 +153,6 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
         setShipState("");
         setShipGst("");
       }
-
-      // Note: Files & previews are NOT pre-filled (can't load existing files client-side)
-      // You'll need backend to return photo URLs if you want to show existing images
       setAadhaarPreview(null);
       setPanPreview(null);
       setGstPreview(null);
@@ -222,7 +231,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["customers"]); // future-proof for real list
+      queryClient.invalidateQueries(["customers"]);
       toast.success(isEdit ? "Customer updated!" : "Customer created!");
       onClose();
     },
@@ -702,9 +711,11 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
 };
 
 export default function Customers() {
-  const [filter, setFilter] = useState("active");
+  const [statusFilter, setStatusFilter] = useState("active");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [printConfigCustomer, setPrintConfigCustomer] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
     open: false,
     action: null,
@@ -721,20 +732,6 @@ export default function Customers() {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
-
-  // Fetch state mapping
-  const { data: rawStates = [] } = useQuery({
-		queryKey: ["states"],
-		queryFn: () => api.get("/api/states").then(res => res.data.data || res.data || []),
-		staleTime: Infinity,
-	});
-
-	const stateMap = {};
-	rawStates.forEach(state => {
-		if (state?.id && state?.name) {
-			stateMap[state.id] = state.name;
-		}
-	});
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/api/customers/${id}`),
@@ -754,16 +751,18 @@ export default function Customers() {
     },
   });
 
-  const filteredCustomers = customers.filter((cust) => {
-    if (filter === "active") return cust.is_active;
-    if (filter === "inactive") return !cust.is_active;
-    return true;
-  });
+  const filteredCustomers = customers.filter(cust => {
+    const matchesStatus =
+      statusFilter === "all" ? true :
+      statusFilter === "active" ? cust.is_active :
+      !cust.is_active;
 
-  const handleAdd = () => {
-    setEditingCustomer(null);
-    setModalOpen(true);
-  };
+    const matchesType =
+      typeFilter === "all" ? true :
+      cust.customer_type === typeFilter; // "cash" or "corporate"
+
+    return matchesStatus && matchesType;
+  });
 
   const handleEdit = (cust) => {
     setEditingCustomer(cust);
@@ -775,7 +774,7 @@ export default function Customers() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
         <button
-          onClick={handleAdd}
+          onClick={() => {setEditingCustomer(null); setModalOpen(true); }}
           className="bg-linear-to-r from-blue-500 to-teal-300 text-black px-6 py-3 rounded-lg hover:opacity-90 flex items-center gap-2 transition cursor-pointer font-medium"
         >
           <Plus size={20} />
@@ -788,8 +787,8 @@ export default function Customers() {
         <div className="flex items-center gap-2">
           <Filter size={20} className="text-gray-500" />
           <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All</option>
@@ -797,17 +796,28 @@ export default function Customers() {
             <option value="inactive">Inactive</option>
           </select>
         </div>
+
+        {/* Type filter — label RCMF, value corporate */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-500">Type:</label>
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All</option>
+            <option value="cash">Cash</option>
+            <option value="corporate">RCMF</option>
+          </select>
+        </div>
       </div>
 
       {/* Table */}
-      {filteredCustomers.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-12 text-gray-400">Loading customers...</div>
+      ) : filteredCustomers.length === 0 ? (
         <div className="bg-gray-50 rounded-xl border text-center py-16">
           <p className="text-gray-600 text-lg font-medium">Nothing to show here</p>
-          <p className="text-gray-500 mt-2">
-            {filter === "active" && "No active customers found"}
-            {filter === "inactive" && "No inactive customers found"}
-            {filter === "all" && "No customers found"}
-          </p>
         </div>
       ) : (
         <div className="overflow-x-auto border rounded-xl shadow-sm">
@@ -817,8 +827,6 @@ export default function Customers() {
                 <th className="text-left p-4 font-medium text-gray-700">Customer-ID</th>
                 <th className="text-left p-4 font-medium text-gray-700">Customer</th>
                 <th className="text-left p-4 font-medium text-gray-700">Type</th>
-                {/* <th className="text-left p-4 font-medium text-gray-700">Phone</th> */}
-                {/* <th className="text-left p-4 font-medium text-gray-700">City</th> */}
                 <th className="text-left p-4 font-medium text-gray-700">Status</th>
                 <th className="text-right p-4 font-medium text-gray-700">Actions</th>
               </tr>
@@ -828,11 +836,18 @@ export default function Customers() {
                 <tr key={cust.id} className="border-t hover:bg-gray-50">
                   <td className="p-4">{cust.customer_code}</td>
                   <td className="p-4 font-medium">
-                    {cust.type === "Company" ? cust.companyName : cust.company_name}
+                    {cust.type === "Company" ? cust.name : cust.company_name}
                   </td>
-                  <td className="p-4">{cust.customer_type}</td>
-                  {/* <td className="p-4">{cust.phone}</td> */}
-                  {/* <td className="p-4">{cust.city}</td> */}
+                  <td className="p-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium
+                      ${cust.customer_type === "corporate"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {cust.customer_type === "corporate" ? "RCMF" : "Cash"}
+                    </span>
+                  </td>
                   <td className="p-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -853,9 +868,19 @@ export default function Customers() {
                             setModalOpen(true)
                           }}
                           className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                          title="Edit"
                         >
                           <Edit size={18} />
                         </button>
+                        {cust.customer_type === "corporate" && (
+                          <button
+                            onClick={() => setPrintConfigCustomer(cust)}
+                            className="text-teal-600 hover:text-teal-800 cursor-pointer"
+                            title="Print Config"
+                          >
+                            <Settings2 size={18} />
+                          </button>
+                        )}
                         <button
                           onClick={() =>
                             setConfirmModal({
@@ -895,6 +920,12 @@ export default function Customers() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         customer={editingCustomer}
+      />
+
+      <PrintConfigModal
+        isOpen={!!printConfigCustomer}
+        onClose={() => setPrintConfigCustomer(null)}
+        customer={printConfigCustomer}
       />
 
       <ConfirmModal
