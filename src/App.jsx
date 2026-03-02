@@ -68,6 +68,7 @@ function AppRoutes() {
 
           <Route path="/superadmin/shipments" element={<CreateShipment />} />
           <Route path="/superadmin/shipments/:id" element={<ShipmentView />} />
+          <Route path="/superadmin/shipments/:id/edit" element={<CreateShipment />} />
         </Route>
       </Route>
 
@@ -84,6 +85,7 @@ function AppRoutes() {
 
           <Route path="/branch/shipments" element={<CreateShipment />} />
           <Route path="/branch/shipments/:id" element={<ShipmentView />} />
+          <Route path="/branch/shipments/:id/edit" element={<CreateShipment />} />
         </Route>
       </Route>
 

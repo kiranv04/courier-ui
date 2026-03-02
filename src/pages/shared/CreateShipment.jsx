@@ -826,7 +826,7 @@ export default function CreateShipment() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Phone Number</label>
-                  <input type="text" value={shipperPhone} onChange={(e) => setShipperPhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" value={shipperPhone} maxLength={10} onChange={(e) => setShipperPhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Email</label>
@@ -1214,7 +1214,7 @@ export default function CreateShipment() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Phone Number</label>
-                  <input type="text" value={consigneePhone} onChange={(e) => setConsigneePhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" value={consigneePhone} maxLength={10} onChange={(e) => setConsigneePhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

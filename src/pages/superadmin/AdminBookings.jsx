@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Filter, Eye, FileText } from "lucide-react";
+import { Filter, Eye, FileText, Edit } from "lucide-react";
 import api from "../../services/api";
 
 const STATUS_COLORS = {
@@ -150,6 +150,15 @@ export default function AdminBookings() {
                   </td> */}
                   <td className="p-4 text-right">
                     <div className="flex justify-end items-center gap-3">
+                      {s.status === "draft" && (
+                        <button
+                          onClick={() => navigate(`/branch/shipments/${s.id}/edit`)}
+                          className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                          title="Edit Draft"
+                        >
+                          <Edit size={18} />
+                        </button>
+                      )}
                       <button
                         onClick={() => navigate(`/superadmin/shipments/${s.id}`)}
                         className="text-gray-600 hover:text-gray-800 cursor-pointer"
