@@ -284,7 +284,8 @@ export default function ShipmentView() {
   };
 
   const handleEdit = () => {
-    navigate(`/branch/shipments/${id}/edit`);
+    if (isSuperAdmin) navigate(`/superadmin/shipments/${id}/edit`);
+    else navigate(`/branch/shipments/${id}/edit`);
   };
 
   if (isLoading) {
