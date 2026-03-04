@@ -492,11 +492,11 @@ export default function CreateShipment() {
     setService(s.service);
     setServiceType(s.service_type || "");
     setPaymentMode(s.payment_mode || "Regular");
-    setCustomerRef(s.customer_ref || "");
+    setCustomerRef(s.customer_reference || "");
     setParcelContent(s.parcel_content || "");
-    setTrackingNumber(s.tracking_number || "");
+    setTrackingNumber(s.awb_number || "");
     setCustomerType(s.customer_type);
-    setCustomerId(s.customer_id?.toString() || "");
+    // setCustomerId(s.customer_id?.toString() || "");
 
     setShipperName(s.shipper_name || "");
     setShipperCompany(s.shipper_company || "");
@@ -569,6 +569,18 @@ export default function CreateShipment() {
     }
   }, [existingShipment]);
 
+  const { data: existingCustomer, isLoading: isCustomerLoading } = useQuery({
+    queryKey: ["customer", existingShipment?.customer_id],
+    queryFn: () => api.get(`/api/customers/${existingShipment.customer_id}`).then(res => res.data.data || res.data),
+    enabled: isEditMode && !!existingShipment?.customer_id,
+  });
+
+  useEffect(() => {
+    if (!existingCustomer) return;
+    setCustomerType(existingCustomer.customer_type);
+    setCustomerId(existingCustomer.id);
+  }, [existingCustomer]);
+
   const { data : customers = [] } = useQuery({
     queryKey: ["customers", customerType],
     queryFn: () => api.get(`/api/customers?type=${customerType}`).then(res => res.data.data || res.data || []),
@@ -577,6 +589,7 @@ export default function CreateShipment() {
   });
 
   useEffect(() => {
+    if (isEditMode) return;
     if (!customerId) {
       setShipperName("");
       setShipperCompany("");
