@@ -276,6 +276,7 @@ export default function ShipmentView() {
     queryKey: ["shipment", id],
     queryFn: () => api.get(`/api/shipments/${id}`).then(res => res.data.data),
     staleTime: Infinity,
+    refetchOnWindowFocus: true,
   });
 
   const handleBack = () => {
