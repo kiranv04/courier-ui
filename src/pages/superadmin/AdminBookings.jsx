@@ -152,7 +152,7 @@ export default function AdminBookings() {
                     <div className="flex justify-end items-center gap-3">
                       {s.status === "draft" && (
                         <button
-                          onClick={() => navigate(`/branch/shipments/${s.id}/edit`)}
+                          onClick={() => navigate(`/superadmin/shipments/${s.id}/edit`)}
                           className="text-blue-600 hover:text-blue-800 cursor-pointer"
                           title="Edit Draft"
                         >
