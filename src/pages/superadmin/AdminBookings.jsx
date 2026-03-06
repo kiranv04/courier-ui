@@ -46,6 +46,8 @@ export default function AdminBookings() {
         },
       }).then(res => res.data.data),
     keepPreviousData: true,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const shipments = data?.data      || [];

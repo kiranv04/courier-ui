@@ -5,6 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { formatDate, formatDateTime } from "../../utils/format";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import StatusUpdateModal from "../../components/StatusUpdateModal";
 
 // ── Toggle (same as PrintConfigPanel) ────────────────────────────────────────
 function Toggle({ checked, onChange, disabled = false }) {
@@ -264,6 +265,7 @@ function LabelValue({ label, value }) {
 
 export default function ShipmentView() {
   const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [statusModal, setStatusModal] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: user } = useAuth();
@@ -337,6 +339,14 @@ export default function ShipmentView() {
             <FileText size={18} />
             Print
           </button>
+          {!["delivered", "cancelled"].includes(shipment.status) && (
+            <button
+              onClick={() => setStatusModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition"
+            >
+              Update Status
+            </button>
+          )}
         </div>
       </div>
 
@@ -574,6 +584,11 @@ export default function ShipmentView() {
         isOpen={printModalOpen}
         onClose={() => setPrintModalOpen(false)}
         shipmentId={id}
+      />
+      <StatusUpdateModal
+        isOpen={statusModal}
+        onClose={() => setStatusModal(false)}
+        shipment={shipment}
       />
     </div>
   );

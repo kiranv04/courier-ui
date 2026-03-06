@@ -33,6 +33,7 @@ export const menuConfig = {
     { to: "/superadmin/customers", label: "Customers", icon: Users },
     { to: "/superadmin/shipments", label: "Shipments", icon: Truck },
     { to: "/superadmin/bookings", label: "Bookings", icon: DollarSign },
+    { to: "/superadmin/manifests", label: "Manifests", icon: FileText },
     { to: "/superadmin/reports", label: "Reports", icon: FileText },
     // { to: "/superadmin/settings", label: "Settings", icon: Settings },
   ],
