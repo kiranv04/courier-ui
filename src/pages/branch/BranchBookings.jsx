@@ -154,7 +154,7 @@ export default function BranchBookings() {
                         <Eye size={18} />
                       </button>
                       <button
-                        onClick={() => window.open(`/api/shipments/${s.id}/pdf`, "_blank")}
+                        onClick={() => window.open(`${import.meta.env.VITE_BASE_URL}/api/shipments/${s.id}/pdf`, "_blank")}
                         className="text-green-600 hover:text-green-800 cursor-pointer"
                         title="Print"
                       >

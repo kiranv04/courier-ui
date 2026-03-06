@@ -23,6 +23,7 @@ import AdminBookings from './pages/superadmin/AdminBookings';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ROLE_HOME } from './config/roleConfig';
 import ShipmentView from './pages/shared/ShipmentView';
+import Manifests from './pages/shared/Manifests';
 
 const queryClient = new QueryClient();
 
@@ -69,11 +70,13 @@ function AppRoutes() {
           <Route path="/superadmin/shipments" element={<CreateShipment />} />
           <Route path="/superadmin/shipments/:id" element={<ShipmentView />} />
           <Route path="/superadmin/shipments/:id/edit" element={<CreateShipment />} />
+
+          <Route path="/superadmin/manifests" element={<Manifests />} />
         </Route>
       </Route>
 
       {/* Branch routes */}
-      <Route element={<ProtectedRoute allowedRoles={["branch-admin", "branch-employee"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["branch-admin", "branch-employee", "branch-delivery"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/branch/dashboard" element={<BranchDashboard />} />
 
@@ -86,6 +89,8 @@ function AppRoutes() {
           <Route path="/branch/shipments" element={<CreateShipment />} />
           <Route path="/branch/shipments/:id" element={<ShipmentView />} />
           <Route path="/branch/shipments/:id/edit" element={<CreateShipment />} />
+
+          <Route path="/branch/manifests" element={<Manifests />} />
         </Route>
       </Route>
 
@@ -94,6 +99,7 @@ function AppRoutes() {
           <Route path="/warehouse/dashboard" element={<BranchDashboard />} />
           <Route path="/warehouse/employees" element={<WarehouseEmployee />} />
           <Route path="/warehouse/bookings" element={<BranchBookings /> } />
+          <Route path="/warehouse/manifests" element={<Manifests />} />
         </Route>
       </Route>
     </Routes>
