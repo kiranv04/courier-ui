@@ -24,6 +24,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { ROLE_HOME } from './config/roleConfig';
 import ShipmentView from './pages/shared/ShipmentView';
 import Manifests from './pages/shared/Manifests';
+import WarehouseDashboard from './pages/warehouse/WarehouseDashboard';
 
 const queryClient = new QueryClient();
 
@@ -94,9 +95,9 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["warehouse-admin"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["warehouse-admin", "warehouse-employee"]} />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/warehouse/dashboard" element={<BranchDashboard />} />
+          <Route path="/warehouse/dashboard" element={<WarehouseDashboard />} />
           <Route path="/warehouse/employees" element={<WarehouseEmployee />} />
           <Route path="/warehouse/bookings" element={<BranchBookings /> } />
           <Route path="/warehouse/manifests" element={<Manifests />} />

@@ -58,5 +58,9 @@ export const menuConfig = {
   "warehouse-admin": [
     { to: "/warehouse/dashboard", label: "Dashboard", icon: Home },
     { to: "/warehouse/bookings", label: "Assigned Trips", icon: Car },
+  ],
+  "warehouse-employee": [
+    { to: "/warehouse/dashboard", label: "Dashboard", icon: Home },
+    { to: "/warehouse/bookings", label: "Assigned Trips", icon: Car },
   ]
 };

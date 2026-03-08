@@ -39,11 +39,11 @@ export default function Login() {
           navigate("/reset-password", { state: { user: userRes.data } }, { replace: true });
         }
       }else{
-        if (role === "super-admin") {
+        if (role === "super-admin" || role === "admin") {
           navigate("/superadmin/dashboard",  { replace: true });
-        } else if (role === "warehouse-admin") {
+        } else if (role === "warehouse-admin" || role === "warehouse-employee") {
           navigate("/warehouse/dashboard", { replace: true });
-        } else if (role === "branch-admin") {
+        } else if (role === "branch-admin" || role === "branch-employee") {
           navigate("/branch/dashboard", { replace: true });
         } else {
           navigate("/dashboard", { replace: true });
