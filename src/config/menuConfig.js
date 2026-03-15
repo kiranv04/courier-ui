@@ -42,6 +42,7 @@ export const menuConfig = {
     { to: "/branch/dashboard", label: "Dashboard", icon: Home },
     { to: "/branch/bookings", label: "Bookings", icon: Calendar },
     { to: "/branch/shipments", label: "Shipments", icon: Truck },
+    { to: "/branch/manifests", label: "Manifests", icon: FileText },
     { to: "/branch/employees", label: "Employees", icon: Users },
     { to: "/branch/customers", label: "Customers", icon: Users },
     { to: "/branch/reports", label: "Reports", icon: FileText },
@@ -51,16 +52,23 @@ export const menuConfig = {
     { to: "/branch/dashboard", label: "Dashboard", icon: Home },
     { to: "/branch/bookings", label: "Bookings", icon: Calendar },
     { to: "/branch/shipments", label: "Shipments", icon: Truck },
+    { to: "/branch/manifests", label: "Manifests", icon: FileText },
     { to: "/branch/customers", label: "Customers", icon: Users },
     { to: "/branch/reports", label: "Reports", icon: FileText },
   ],
 
+  "branch-delivery": [
+    { to: "/delivery/dashboard", label: "Dashboard", icon: Home },
+    { to: "/delivery/shipments", label: "Shipments", icon: Truck },
+    { to: "/delivery/manifests", label: "Manifests", icon: FileText },
+  ],
+
   "warehouse-admin": [
     { to: "/warehouse/dashboard", label: "Dashboard", icon: Home },
-    { to: "/warehouse/bookings", label: "Assigned Trips", icon: Car },
+    { to: "/warehouse/manifests", label: "Manifests", icon: Car },
   ],
   "warehouse-employee": [
     { to: "/warehouse/dashboard", label: "Dashboard", icon: Home },
-    { to: "/warehouse/bookings", label: "Assigned Trips", icon: Car },
+    { to: "/warehouse/manifests", label: "Manifests", icon: Car },
   ]
 };

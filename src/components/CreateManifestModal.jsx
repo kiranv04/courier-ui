@@ -8,6 +8,7 @@ const MANIFEST_TYPES = {
   branch: [
     { value: "pickup",   label: "Pickup Manifest",   description: "Shipments collected from customers", fromStatus: "booked" },
     { value: "dispatch", label: "Dispatch Manifest",  description: "Shipments being sent to hub or branch", fromStatus: "picked_up" },
+    { value: "inbound",  label: "Inbound Manifest",   description: "Shipments received from hub or another branch", fromStatus: "in_transit" },
     { value: "delivery", label: "Delivery Manifest",  description: "Shipments assigned to delivery agents", fromStatus: "at_branch" },
   ],
   warehouse: [

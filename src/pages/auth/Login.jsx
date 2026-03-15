@@ -45,6 +45,8 @@ export default function Login() {
           navigate("/warehouse/dashboard", { replace: true });
         } else if (role === "branch-admin" || role === "branch-employee") {
           navigate("/branch/dashboard", { replace: true });
+        } else if (role === "branch-delivery") {
+            navigate("/delivery/dashboard", { replace: true });
         } else {
           navigate("/dashboard", { replace: true });
         }
