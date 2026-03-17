@@ -59,8 +59,8 @@ export const menuConfig = {
 
   "branch-delivery": [
     { to: "/delivery/dashboard", label: "Dashboard", icon: Home },
-    { to: "/delivery/shipments", label: "Shipments", icon: Truck },
-    { to: "/delivery/manifests", label: "Manifests", icon: FileText },
+    // { to: "/delivery/shipments", label: "Shipments", icon: Truck },
+    // { to: "/delivery/manifests", label: "Manifests", icon: FileText },
   ],
 
   "warehouse-admin": [

@@ -16,7 +16,7 @@ const FAILURE_REASONS = [
 const DeliverModal = ({ isOpen, onClose, assignment }) => {
     const [codAmount, setCodAmount] = useState("");
     const queryClient = useQueryClient();
-    const isCOD = assignment?.shipment?.payment_type === "COD";
+    const isCOD = assignment?.shipment?.payment_mode === "COD";
 
     const mutation = useMutation({
         mutationFn: () => api.post(
@@ -90,7 +90,7 @@ const FailModal = ({ isOpen, onClose, assignment }) => {
     const mutation = useMutation({
         mutationFn: () => api.post(
             `/api/delivery/shipments/${assignment.shipment.id}/fail`,
-            { reason, notes: notes || undefined }
+            { reason, notes: notes }
         ),
         onSuccess: () => {
             queryClient.invalidateQueries(["delivery-shipments"]);
@@ -253,7 +253,7 @@ export default function DeliveryDashboard() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-teal-500 px-4 pt-10 pb-6">
+            <div className="bg-linear-to-r from-blue-600 to-teal-500 px-4 pt-10 pb-6">
                 <p className="text-blue-100 text-sm">
                     Good {new Date().getHours() < 12 ? "morning" : "afternoon"},
                 </p>

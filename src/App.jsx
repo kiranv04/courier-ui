@@ -25,6 +25,7 @@ import { ROLE_HOME } from './config/roleConfig';
 import ShipmentView from './pages/shared/ShipmentView';
 import Manifests from './pages/shared/Manifests';
 import WarehouseDashboard from './pages/warehouse/WarehouseDashboard';
+import DeliveryDashboard from './pages/delivery/Dashboard';
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,16 @@ function AppRoutes() {
           <Route path="/warehouse/employees" element={<WarehouseEmployee />} />
           <Route path="/warehouse/bookings" element={<BranchBookings /> } />
           <Route path="/warehouse/manifests" element={<Manifests />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={["branch-delivery"]} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/delivery/dashboard" element={<DeliveryDashboard />} />
+          {/* <Route path="/delivery/shipments" element={<CreateShipment />} />
+          <Route path="/delivery/shipments/:id" element={<ShipmentView />} />
+          <Route path="/delivery/shipments/:id/edit" element={<CreateShipment />} />
+          <Route path="/delivery/manifests" element={<Manifests />} /> */}
         </Route>
       </Route>
     </Routes>
