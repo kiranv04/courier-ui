@@ -58,7 +58,7 @@ const ConfirmModal = ({ isOpen, onClose, title, onConfirm, loading }) => {
 // Main Customer Modal
 const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const isEdit = !!customer;
-
+console.log("Customer data in modal:", customer);
   const [type, setType] = useState("Individual");
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -114,16 +114,19 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
       setAadhaarNumber(customer.aadhar_number || "");
       setPanNumber(customer.pan_number || "");
       setGstNumber(customer.gst_number || "");
+      setAadhaarPreview(customer.aadhar_image_path);
+      setPanPreview(customer.pan_image_path);
+      setGstPreview(customer.gst_image_path);
 
       // Billing address
-      setBillName(customer.billing_name || "");
-      setBillCompany(customer.billing_company_name || "");
-      setBillLine1(customer.billing_address_line1 || "");
-      setBillLine2(customer.billing_address_line2 || "");
-      setBillCity(customer.billing_city || "");
-      setBillPincode(customer.billing_pincode || "");
-      setBillPhone(customer.billing_phone || "");
-      setBillEmail(customer.billing_email || "");
+      setBillName(customer.addresses[0]?.contact_person);
+      setBillCompany(customer.company_name);
+      setBillLine1(customer.addresses[0]?.address_line1);
+      setBillLine2(customer.addresses[0]?.address_line2);
+      setBillCity(customer.addresses[0]?.city || "");
+      setBillPincode(customer.addresses[0]?.pincode || "");
+      setBillPhone(customer.addresses[0]?.contact_phone);
+      setBillEmail(customer.addresses[0]?.email || "");
       setBillState(customer.billing_state_id || "");
       setBillGst(customer.billing_gst_number || "");
 
