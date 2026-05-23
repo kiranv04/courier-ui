@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api";
 import PrintConfigPanel from "../../components/PrintConfigPanel";
+import { gstValidationMessage } from "../../utils/gst";
 
 // ── Print Config Modal ────────────────────────────────────────────────────────
 const PrintConfigModal = ({ isOpen, onClose, customer }) => {
@@ -58,14 +59,15 @@ const ConfirmModal = ({ isOpen, onClose, title, onConfirm, loading }) => {
 // Main Customer Modal
 const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const isEdit = !!customer;
-console.log("Customer data in modal:", customer);
-  const [type, setType] = useState("Individual");
+  const [type, setType] = useState("individual");
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [aadhaarNumber, setAadhaarNumber] = useState("");
   const [panNumber, setPanNumber] = useState("");
   const [gstNumber, setGstNumber] = useState("");
   const [customerType, setCustomerType] = useState("cash");
+
+  const gstError = gstValidationMessage(gstNumber);
 
   // File previews
   const [aadhaarPreview, setAadhaarPreview] = useState(null);
@@ -88,6 +90,8 @@ console.log("Customer data in modal:", customer);
   const [billState, setBillState] = useState("");
   const [billGst, setBillGst] = useState("");
 
+  const billGstError = gstValidationMessage(billGst);
+
   // Shipping
   const [sameAddress, setSameAddress] = useState(true);
   const [shipName, setShipName] = useState("");
@@ -100,6 +104,8 @@ console.log("Customer data in modal:", customer);
   const [shipEmail, setShipEmail] = useState("");
   const [shipState, setShipState] = useState("");
   const [shipGst, setShipGst] = useState("");
+
+  const shipGstError = gstValidationMessage(shipGst);
 
   const queryClient = useQueryClient();
   
@@ -118,32 +124,43 @@ console.log("Customer data in modal:", customer);
       setPanPreview(customer.pan_image_path);
       setGstPreview(customer.gst_image_path);
 
-      // Billing address
-      setBillName(customer.addresses[0]?.contact_person);
-      setBillCompany(customer.company_name);
-      setBillLine1(customer.addresses[0]?.address_line1);
-      setBillLine2(customer.addresses[0]?.address_line2);
-      setBillCity(customer.addresses[0]?.city || "");
-      setBillPincode(customer.addresses[0]?.pincode || "");
-      setBillPhone(customer.addresses[0]?.contact_phone);
-      setBillEmail(customer.addresses[0]?.email || "");
-      setBillState(customer.billing_state_id || "");
-      setBillGst(customer.billing_gst_number || "");
-
-      // Shipping (only if different)
-      if (customer.same_address === 0) {
+      if(customer.addresses.length === 2){
         setSameAddress(false);
-        setShipName(customer.shipping_name || "");
-        setShipCompany(customer.shipping_company_name || "");
-        setShipLine1(customer.shipping_address_line1 || "");
-        setShipLine2(customer.shipping_address_line2 || "");
-        setShipCity(customer.shipping_city || "");
-        setShipPincode(customer.shipping_pincode || "");
-        setShipPhone(customer.shipping_phone || "");
-        setShipEmail(customer.shipping_email || "");
-        setShipState(customer.shipping_state_id || "");
-        setShipGst(customer.shipping_gst_number || "");
-      } else {
+        setBillName(customer.addresses[0]?.contact_person);
+        setBillCompany(customer.company_name);
+        setBillLine1(customer.addresses[0]?.address_line1);
+        setBillLine2(customer.addresses[0]?.address_line2);
+        setBillCity(customer.addresses[0]?.city || "");
+        setBillPincode(customer.addresses[0]?.pincode || "");
+        setBillPhone(customer.addresses[0]?.contact_phone);
+        setBillEmail(customer.addresses[0]?.email || "");
+        setBillState(customer.addresses[0]?.state_id || "");
+        setBillGst(customer.addresses[0]?.gst_number || "");
+
+        // Shipping address
+        setShipName(customer.addresses[1]?.contact_person || "");
+        setShipCompany(customer.addresses[1]?.company_name || "");
+        setShipLine1(customer.addresses[1]?.address_line1 || "");
+        setShipLine2(customer.addresses[1]?.address_line2 || "");
+        setShipCity(customer.addresses[1]?.city || "");
+        setShipPincode(customer.addresses[1]?.pincode || "");
+        setShipPhone(customer.addresses[1]?.contact_phone || "");
+        setShipEmail(customer.addresses[1]?.email || "");
+        setShipState(customer.addresses[1]?.state_id || "");
+        setShipGst(customer.addresses[1]?.gst_number || "");
+      }else{
+        // Billing address
+        setBillName(customer.addresses[0]?.contact_person);
+        setBillCompany(customer.company_name);
+        setBillLine1(customer.addresses[0]?.address_line1);
+        setBillLine2(customer.addresses[0]?.address_line2);
+        setBillCity(customer.addresses[0]?.city || "");
+        setBillPincode(customer.addresses[0]?.pincode || "");
+        setBillPhone(customer.addresses[0]?.contact_phone);
+        setBillEmail(customer.addresses[0]?.email || "");
+        setBillState(customer.addresses[0]?.state_id || "");
+        setBillGst(customer.addresses[0]?.gst_number || "");
+
         setSameAddress(true);
         setShipName("");
         setShipCompany("");
@@ -155,16 +172,14 @@ console.log("Customer data in modal:", customer);
         setShipEmail("");
         setShipState("");
         setShipGst("");
+        
+        setAadhaarFile(null);
+        setPanFile(null);
+        setGstFile(null);
       }
-      setAadhaarPreview(null);
-      setPanPreview(null);
-      setGstPreview(null);
-      setAadhaarFile(null);
-      setPanFile(null);
-      setGstFile(null);
     } else {
       // Add mode: reset everything to defaults
-      setType("Individual");
+      setType("individual");
       setCustomerType("cash");
       setName("");
       setCompanyName("");
@@ -467,8 +482,9 @@ console.log("Customer data in modal:", customer);
                   onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
                   placeholder="Enter 15-digit GSTIN"
                   maxLength={15}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase"
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase ${gstError ? 'border-red-500' : ''}`}
                 />
+                {gstError && <p className="text-red-500 text-xs mt-1">{gstError}</p>}
                 <div className="mt-3">
                   <label className="block text-sm font-medium mb-2">GST Photo <span className="text-red-700">*</span></label>
                   <div className="flex items-center gap-4">
@@ -578,15 +594,18 @@ console.log("Customer data in modal:", customer);
                 </option>
               ))}
             </select>
-            {type === "Individual" && (
-              <input
-                type="text"
-                value={billGst}
-                onChange={(e) => setBillGst(e.target.value)}
-                placeholder="GST Number"
-                maxLength={15}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            {type === "individual" && (
+              <div>
+                <input
+                  type="text"
+                  value={billGst}
+                  onChange={(e) => setBillGst(e.target.value)}
+                  placeholder="GST Number"
+                  maxLength={15}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase ${gstError ? 'border-red-500' : ''}`}
+                />
+                {billGstError && <p className="text-red-500 text-xs mt-1">{billGstError}</p>}
+              </div>
             )}
           </div>
         </div>
@@ -679,14 +698,18 @@ console.log("Customer data in modal:", customer);
                   </option>
                 ))}
               </select>
-              {type === "Individual" && (
+              {type === "individual" && (
+                <div>
                 <input
                   type="text"
                   value={shipGst}
                   onChange={(e) => setShipGst(e.target.value)}
                   placeholder="GST Number"
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={15}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${gstError ? 'border-red-500' : ''} font-mono uppercase`}
                 />
+                {shipGstError && <p className="text-red-500 text-xs mt-1">{shipGstError}</p>}
+                </div>
               )}  
             </div>
           </div>
@@ -699,7 +722,7 @@ console.log("Customer data in modal:", customer);
             disabled={mutation.isLoading}
             className="flex-1 bg-linear-to-r from-green-800 to-green-400 text-white py-4 rounded-xl hover:opacity-90 transition font-semibold text-lg cursor-pointer"
           >
-            UPLOAD & CREATE ACCOUNT
+            {isEdit ? "UPDATE" : "UPLOAD & CREATE ACCOUNT"}
           </button>
           <button
             onClick={onClose}
