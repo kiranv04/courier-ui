@@ -23,7 +23,6 @@ export default function BranchBookings() {
   const navigate = useNavigate();
   const { data: branchAdmin } = useAuth();
   const branchId = branchAdmin?.owner_id;
-	console.log("Branch ID:", branchId);
 
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo]     = useState(today);
@@ -153,13 +152,13 @@ export default function BranchBookings() {
                       >
                         <Eye size={18} />
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => window.open(`${import.meta.env.VITE_BASE_URL}/api/shipments/${s.id}/pdf`, "_blank")}
                         className="text-green-600 hover:text-green-800 cursor-pointer"
                         title="Print"
                       >
                         <FileText size={18} />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>

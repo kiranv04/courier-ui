@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Filter, Eye, FileText, Edit } from "lucide-react";
 import api from "../../services/api";
+import { useAuth } from "../../hooks/useAuth";
 
 const STATUS_COLORS = {
   draft:              "bg-gray-100 text-gray-600",
@@ -18,30 +19,34 @@ const STATUS_COLORS = {
 
 const today = new Date().toISOString().split("T")[0];
 
-export default function AdminBookings() {
+export default function BranchCashInvoice() {
   const navigate  = useNavigate();
+	const { data: branchAdmin } = useAuth();
+	const branchId = branchAdmin?.owner_id;
 
-  const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState("");
   const [dateFrom, setDateFrom]             = useState(today);
   const [dateTo, setDateTo]                 = useState(today);
   const [status, setStatus]                 = useState("");
   const [page, setPage]                     = useState(1);
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ["branches"],
-    queryFn: () => api.get("/api/branches").then(res => res.data.data || []),
+  const { data: customers = [] } = useQuery({
+    queryKey: ["customers"],
+    queryFn: () => api.get("/api/customers?type=cash").then(res => res.data.data || []),
     staleTime: Infinity,
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-bookings", selectedBranch, dateFrom, dateTo, status, page],
+    queryKey: ["cash-invoices", branchId, selectedCustomer, dateFrom, dateTo, status, page],
     queryFn: () =>
-      api.get("/api/shipments", {
+      api.get("/api/invoices", {
         params: {
-          branch_id: selectedBranch || undefined,
+          branch_id: branchId || undefined,
+          customer_id: selectedCustomer || undefined,
+          type: "cash",
           date_from: dateFrom      || undefined,
           date_to:   dateTo        || undefined,
-          status:    status        || undefined,
+          // status:    status        || undefined,
           page,
         },
       }).then(res => res.data.data),
@@ -56,21 +61,20 @@ export default function AdminBookings() {
   return (
     <div className="p-8 bg-white rounded-2xl shadow-2xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">All Bookings</h1>
+        <h1 className="text-3xl font-bold text-gray-900">All Cash Invoices</h1>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <Filter size={20} className="text-gray-500" />
-
         <select
-          value={selectedBranch}
-          onChange={(e) => { setSelectedBranch(e.target.value); setPage(1); }}
+          value={selectedCustomer}
+          onChange={(e) => { setSelectedCustomer(e.target.value); setPage(1); }}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
         >
-          <option value="">All Branches</option>
-          {branches.map(b => (
-            <option key={b.id} value={b.id}>{b.name}</option>
+          <option value="">All Customers</option>
+          {customers.map(c => (
+            <option key={c.id} value={c.id}>{c.company_name} - {c.contact_person}</option>
           ))}
         </select>
 
@@ -93,7 +97,7 @@ export default function AdminBookings() {
           />
         </div>
 
-        <select
+        {/* <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
@@ -108,15 +112,15 @@ export default function AdminBookings() {
           <option value="delivered">Delivered</option>
           <option value="exception">Exception</option>
           <option value="cancelled">Cancelled</option>
-        </select>
+        </select> */}
       </div>
 
       {/* Table */}
       {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Loading bookings...</div>
+        <div className="text-center py-12 text-gray-500">Loading invoices...</div>
       ) : shipments.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border text-center py-16">
-          <p className="text-gray-500 text-lg">No bookings found</p>
+          <p className="text-gray-500 text-lg">No invoices found</p>
           <p className="text-gray-400 text-sm mt-2">Try selecting a branch or adjusting the date range</p>
         </div>
       ) : (
@@ -124,10 +128,9 @@ export default function AdminBookings() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="text-left p-4 font-medium text-gray-700">AWB</th>
+                <th className="text-left p-4 font-medium text-gray-700">Invoice No.</th>
                 <th className="text-left p-4 font-medium text-gray-700">Branch</th>
                 <th className="text-left p-4 font-medium text-gray-700">Shipper</th>
-                <th className="text-left p-4 font-medium text-gray-700">Consignee</th>
                 <th className="text-left p-4 font-medium text-gray-700">Service</th>
                 <th className="text-left p-4 font-medium text-gray-700">Status</th>
                 {/* <th className="text-right p-4 font-medium text-gray-700">Amount</th> */}
@@ -137,11 +140,10 @@ export default function AdminBookings() {
             <tbody>
               {shipments.map((s) => (
                 <tr key={s.id} className="border-t hover:bg-gray-50">
-                  <td className="p-4 font-mono text-sm font-semibold">{s.awb_number}</td>
+                  <td className="p-4 font-mono text-sm font-semibold">{s.invoice_number }</td>
                   <td className="p-4 text-sm">{s.branch?.name || "-"}</td>
-                  <td className="p-4">{s.shipper_name}</td>
-                  <td className="p-4">{s.consignee_name}</td>
-                  <td className="p-4 text-sm">{s.service}</td>
+                  <td className="p-4">{s.customer.contact_person + " - " + s.customer.company_name}</td>
+                  <td className="p-4 text-sm">{s.shipments[0]?.service_type || "-"}</td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[s.status]}`}>
                       {s.status.replace(/_/g, " ").toUpperCase()}
@@ -151,30 +153,21 @@ export default function AdminBookings() {
                     ₹{s.charges?.grand_total ?? "-"}
                   </td> */}
                   <td className="p-4 text-right">
-                    <div className="flex justify-end items-center gap-3">
-                      {s.status === "draft" && (
-                        <button
-                          onClick={() => navigate(`/superadmin/shipments/${s.id}/edit`)}
-                          className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                          title="Edit Draft"
-                        >
-                          <Edit size={18} />
-                        </button>
-                      )}
-                      <button
+                    <div className="flex justify-end items-center gap-3"> 
+                      {/* <button
                         onClick={() => navigate(`/superadmin/shipments/${s.id}`)}
                         className="text-gray-600 hover:text-gray-800 cursor-pointer"
                         title="View"
                       >
                         <Eye size={18} />
-                      </button>
-                      {/* <button
-                        onClick={() => window.open(`${import.meta.env.VITE_BASE_URL}/api/shipments/${s.id}/pdf`, "_blank")}
+                      </button> */}
+                      <button
+                        onClick={() => window.open(`${import.meta.env.VITE_BASE_URL}/api/shipments/${s.shipments[0]?.id}/pdf`, "_blank")}
                         className="text-green-600 hover:text-green-800 cursor-pointer"
                         title="Print"
                       >
                         <FileText size={18} />
-                      </button> */}
+                      </button>
                     </div>
                   </td>
                 </tr>

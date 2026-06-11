@@ -26,6 +26,10 @@ import ShipmentView from './pages/shared/ShipmentView';
 import Manifests from './pages/shared/Manifests';
 import WarehouseDashboard from './pages/warehouse/WarehouseDashboard';
 import DeliveryDashboard from './pages/delivery/Dashboard';
+import CashInvoice from './pages/superadmin/CashInvoice';
+import BranchCashInvoice from './pages/branch/BranchCashInvoice';
+import CorporateInvoice from './pages/superadmin/CorporateInvoice';
+import CreateCorporateInvoice from './pages/superadmin/CreateCorporateInvoice';
 
 const queryClient = new QueryClient();
 
@@ -73,6 +77,10 @@ function AppRoutes() {
           <Route path="/superadmin/shipments/:id" element={<ShipmentView />} />
           <Route path="/superadmin/shipments/:id/edit" element={<CreateShipment />} />
 
+          <Route path="/superadmin/cash-invoices" element={<CashInvoice />} />
+          <Route path="/superadmin/corporate-invoices" element={<CorporateInvoice />} />
+          <Route path="/superadmin/corporate-invoices/create" element={<CreateCorporateInvoice />} />
+
           <Route path="/superadmin/manifests" element={<Manifests />} />
         </Route>
       </Route>
@@ -91,6 +99,8 @@ function AppRoutes() {
           <Route path="/branch/shipments" element={<CreateShipment />} />
           <Route path="/branch/shipments/:id" element={<ShipmentView />} />
           <Route path="/branch/shipments/:id/edit" element={<CreateShipment />} />
+
+          <Route path="/branch/cash-invoices" element={<BranchCashInvoice />} />
 
           <Route path="/branch/manifests" element={<Manifests />} />
         </Route>

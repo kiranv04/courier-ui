@@ -339,14 +339,14 @@ export default function ShipmentView() {
             <FileText size={18} />
             Print
           </button>
-          {!["delivered", "cancelled"].includes(shipment.status) && (
+          {/* {!["delivered", "cancelled"].includes(shipment.status) && (
             <button
               onClick={() => setStatusModal(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition"
             >
               Update Status
             </button>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -458,7 +458,7 @@ export default function ShipmentView() {
                     <td className="py-2 pr-4">{p.width}</td>
                     <td className="py-2 pr-4">{p.height}</td>
                     <td className="py-2 pr-4">{p.weight}</td>
-                    <td className="py-2 pr-4">{p.vol_weight}</td>
+                    <td className="py-2 pr-4">{p.volumetric_weight}</td>
                     {shipment.service === "Parcel" && (
                       <td className="py-2">{p.num_boxes}</td>
                     )}
