@@ -404,8 +404,8 @@ export default function CreateShipment() {
   const [parcels, setParcels] = useState([
     { id: 1, numBoxes: 1, length: 0, width: 0, height: 0, weight: 0 }
   ]);
-  const [type, setType] = useState("corporate");
-  const [customerType, setCustomerType] = useState("cash");
+  const [type, setType] = useState("company"); // "company" or "individual" - Set based on selected customer.
+  const [customerType, setCustomerType] = useState("cash"); // "cash" or "corporate"
 
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -620,6 +620,7 @@ export default function CreateShipment() {
     setShipperCompany(customer.company_name || "");
     setShipperPhone(customer.contact_phone || "");
     setShipperGst(customer.gst_number || "");
+    setType(customer.type || "");
     // console.log("Customer Addresses:", customer);
 
     const address = customer.addresses?.[0];
@@ -880,7 +881,7 @@ export default function CreateShipment() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium mb-2">Select Customer Type <span className="text-red-500">*</span></label>
-                  <select onChange={(e) => setCustomerType(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select value={customerType} onChange={(e) => setCustomerType(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="cash">Cash</option>
                     <option value="corporate">RCMF</option>
                   </select>
@@ -964,7 +965,7 @@ export default function CreateShipment() {
                     <input type="text" value={shipperPincode} onChange={(e) => setShipperPincode(e.target.value)} placeholder="Pincode" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${shippergstError ? "border-red-400" : ""}`} />
                   </div>
                 </div>
-                {type === "corporate" && (
+                {type === "company" && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Sender GST Number <span className="text-red-500">*</span></label>
                     <input type="text" minLength={15} maxLength={15} value={shipperGst} onChange={(e) => setShipperGst(e.target.value)} placeholder="GST Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
