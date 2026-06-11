@@ -65,8 +65,8 @@ export default function StatusUpdateModal({ isOpen, onClose, shipment }) {
   });
 
   const destinations = Array.isArray(destinationsData) ? destinationsData : [];
-  console.log("Destinations Data:", destinationsData);
-  console.log("Selected Status:", selectedStatus);
+  // console.log("Destinations Data:", destinationsData);
+  // console.log("Selected Status:", selectedStatus);
 
   // Fetch delivery agents for out_for_delivery
   const { data: agentsData } = useQuery({

@@ -41,17 +41,17 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
 
   // Fetch state mapping
   const { data: rawCfts = [] } = useQuery({
-		queryKey: ["cfts"],
-		queryFn: () => api.get("/api/cfts").then(res => res.data.data || res.data || []),
-		staleTime: Infinity,
-	});
+        queryKey: ["cfts"],
+        queryFn: () => api.get("/api/cfts").then(res => res.data.data || res.data || []),
+        staleTime: Infinity,
+    });
 
-	const cftMap = {};
-	rawCfts.forEach(cft => {
-		if (cft?.id && cft?.cft_value && cft?.is_active) {
-			cftMap[cft.id] = cft.cft_value;
-		}
-	});
+    const cftMap = {};
+    rawCfts.forEach(cft => {
+        if (cft?.id && cft?.cft_value && cft?.is_active) {
+            cftMap[cft.id] = cft.cft_value;
+        }
+    });
 
   useEffect(() => {
     if (open && savedRates) {
@@ -378,7 +378,7 @@ const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceTy
   );
 };
 
-export default function CreateShipment() {
+export default function CreateCorporateInvoice() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = !!id;
@@ -387,6 +387,7 @@ export default function CreateShipment() {
   const isSuperAdmin = user?.roles?.[0]?.name === "super-admin" || user?.roles?.[0]?.name === "admin";
 
   const [selectedBranchId, setSelectedBranchId] = useState("");
+
 
   useEffect(() => {
     if (!user) return;
@@ -404,7 +405,7 @@ export default function CreateShipment() {
   const [parcels, setParcels] = useState([
     { id: 1, numBoxes: 1, length: 0, width: 0, height: 0, weight: 0 }
   ]);
-  const [type, setType] = useState("corporate");
+  const [type, setType] = useState("company");
   const [customerType, setCustomerType] = useState("cash");
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -471,13 +472,6 @@ export default function CreateShipment() {
     queryFn: () => api.get("/api/branches").then(res => res.data.data || []),
     enabled: isSuperAdmin,
     staleTime: Infinity,
-  });
-
-  const { data: state = [] } = useQuery({
-    queryKey: ["states"],
-    queryFn: () => api.get("/api/states").then(res => res.data.data || []),
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
   });
 
   // Branch query driven by selectedBranchId for both roles
@@ -619,8 +613,7 @@ export default function CreateShipment() {
     setShipperName(customer.contact_person || "");
     setShipperCompany(customer.company_name || "");
     setShipperPhone(customer.contact_phone || "");
-    setShipperGst(customer.gst_number || "");
-    // console.log("Customer Addresses:", customer);
+    console.log("Customer Addresses:", customer);
 
     const address = customer.addresses?.[0];
       if (address && (address.address_type === "both" || address.address_type === "billing")) {
@@ -770,17 +763,12 @@ export default function CreateShipment() {
         ...(isSuperAdmin && { branchId: Number(selectedBranchId), }),
         shipper: { shipperName, shipperCompany, shipperEmail, shipperPhone, shipperAddLine1, shipperAddLine2, shipperAddCity, shipperState, shipperPincode, shipperGst },
         service: { serviceType, service, customerRef, parcelContent, trackingNumber, paymentMode },
-        parcels: parcels.map(p => ({
-          ...p,
-          volWeight: serviceType === 'Apex'
-            ? roundTo2((((Number(p.length) || 0) * (Number(p.width) || 0) * (Number(p.height) || 0)) / 5000) * (Number(p.numBoxes) || 0))
-            : roundTo2((((Number(p.length) || 0) * (Number(p.width) || 0) * (Number(p.height) || 0)) / 27000) * (Number(p.numBoxes) || 0) * (Number(savedRates?.cft) || 1))
-        })),
+        parcels,
         invoices,
         rates: savedRates,
         customer: { customerId, customerType },
         specialInstruction: specialInstruction.trim() ? specialInstruction : null,
-        consignee: { consigneeName, receiverName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeState, consigneeGst },
+        consignee: { consigneeName, receiverName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeGst },
         dodCodDetails: { inFavour, payableAt, collectableAmount }
       };
     } else{
@@ -792,21 +780,12 @@ export default function CreateShipment() {
         customer: { customerId, customerType },
         rates: savedRates,
         specialInstruction: specialInstruction.trim() ? specialInstruction : null,
-        consignee: { consigneeName, receiverName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeState, consigneeGst },
-        docDimensions: { 
-          length: docLength, 
-          width: docWidth, 
-          height: docHeight,
-          volWeight: serviceType === 'Apex'
-            ? roundTo2(((Number(docHeight) || 0) * (Number(docLength) || 0) * (Number(docWidth) || 0)) / 5000).toFixed(2)
-            : roundTo2((((Number(docHeight) || 0) * (Number(docLength) || 0) * (Number(docWidth) || 0)) / 27000) * (Number(savedRates?.cft) || 1)).toFixed(2),
-          weight: docWeight
-        },
+        consignee: { consigneeName, receiverName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeGst },
+        docDimensions: { length: docLength, width: docWidth, height: docHeight, weight: docWeight },
         dodCodDetails: { inFavour, payableAt, collectableAmount }
       };
     }
-    console.log("Payload to save:", payload);
-    // return;
+    // console.log("Payload to save:", payload);
     if (isEditMode) {
       updateMutation.mutate({ id, data: payload });
     } else {
@@ -829,7 +808,7 @@ export default function CreateShipment() {
   };
 
   return (
-    <div className="p-6 md:p-8 bg-white rounded-2xl shadow-2xl max-w-5xl mx-auto">
+    <div className="p-6 md:p-8 bg-white rounded-2xl shadow-2xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Create Shipment</h1>
         <div className="bg-blue-100 text-blue-700 px-5 py-2 rounded-full font-medium text-lg">
@@ -949,22 +928,13 @@ export default function CreateShipment() {
                     className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">State <span className="text-red-500">*</span></label>
-                  <select value={shipperState} onChange={(e) => setShipperState(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select State</option>
-                    {state.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
                 <div className="relative">
                   <label className="block text-sm font-medium mb-2">Pincode <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input type="text" value={shipperPincode} onChange={(e) => setShipperPincode(e.target.value)} placeholder="Pincode" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${shippergstError ? "border-red-400" : ""}`} />
                   </div>
                 </div>
-                {type === "corporate" && (
+                {type === "company" && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Sender GST Number <span className="text-red-500">*</span></label>
                     <input type="text" minLength={15} maxLength={15} value={shipperGst} onChange={(e) => setShipperGst(e.target.value)} placeholder="GST Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -1342,15 +1312,6 @@ export default function CreateShipment() {
                   <div className="relative">
                     <input type="text" value={consigneePincode} onChange={(e) => setConsigneePincode(e.target.value)} placeholder="Pincode" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">State <span className="text-red-500">*</span></label>
-                  <select value={consigneeState} onChange={(e) => setConsigneeState(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select State</option>
-                    {state.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Receiver GST Number <span className="text-red-500">*</span></label>

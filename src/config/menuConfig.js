@@ -34,6 +34,12 @@ export const menuConfig = {
     { to: "/superadmin/shipments", label: "Shipments", icon: Truck },
     { to: "/superadmin/bookings", label: "Bookings", icon: DollarSign },
     { to: "/superadmin/manifests", label: "Manifests", icon: FileText },
+    { label: "Invoices", icon: FileText, 
+      children: [
+        { to: "/superadmin/cash-invoices", label: "Cash Invoices" },
+        { to: "/superadmin/corporate-invoices", label: "Corporate Invoices" },
+      ]
+    },
     { to: "/superadmin/reports", label: "Reports", icon: FileText },
     // { to: "/superadmin/settings", label: "Settings", icon: Settings },
   ],
@@ -45,6 +51,12 @@ export const menuConfig = {
     { to: "/branch/manifests", label: "Manifests", icon: FileText },
     { to: "/branch/employees", label: "Employees", icon: Users },
     { to: "/branch/customers", label: "Customers", icon: Users },
+    { label: "Invoices", icon: FileText, 
+      children: [
+        { to: "/branch/cash-invoices", label: "Cash Invoices" },
+        { to: "/branch/corporate-invoices", label: "Corporate Invoices" },
+      ]
+    },
     { to: "/branch/reports", label: "Reports", icon: FileText },
   ],
 
