@@ -111,8 +111,8 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   
   useEffect(() => {
     if (customer) {
-      setType(customer.type || "individual");
-      setCustomerType(customer.customer_type || "cash");
+      setType(customer.type);
+      setCustomerType(customer.customer_type);
 
       // Billing / main fields
       setName(customer.name || "");
@@ -310,13 +310,13 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
       }
 
       // Append actual files (conditionally)
-      if (aadhaarFile && type === "Individual") {
+      if (aadhaarFile && type === "individual") {
         formData.append("aadhar_image_path", aadhaarFile);
       }
       if (panFile) {
         formData.append("pan_image_path", panFile);
       }
-      if (gstFile && type === "Company") {
+      if (gstFile && type === "company") {
         formData.append("gst_image_path", gstFile);
       }
 
