@@ -471,7 +471,7 @@ export default function ShipmentView() {
       )}
 
       {/* Invoices */}
-      {shipment.invoices?.length > 0 && (
+      {shipment.shipment_invoices?.length > 0 && (
         <Section title="Invoices">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -483,7 +483,7 @@ export default function ShipmentView() {
                 </tr>
               </thead>
               <tbody>
-                {shipment.invoices.map((inv, i) => (
+                {shipment.shipment_invoices.map((inv, i) => (
                   <tr key={i} className="border-t">
                     <td className="py-2 pr-4 font-mono">{inv.invoice_number}</td>
                     <td className="py-2 pr-4">₹{inv.invoice_amount}</td>

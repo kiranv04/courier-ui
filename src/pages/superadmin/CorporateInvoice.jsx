@@ -186,7 +186,7 @@ export default function CorporateInvoice() {
                         <Eye size={18} />
                       </button> */}
                       <button
-                        onClick={() => window.open(`${import.meta.env.VITE_BASE_URL}/api/shipments/${s.shipments[0]?.id}/pdf`, "_blank")}
+                        onClick={() => window.open(`${import.meta.env.VITE_BASE_URL}/api/invoices/${s.id}/pdf`, "_blank")}
                         className="text-green-600 hover:text-green-800 cursor-pointer"
                         title="Print"
                       >

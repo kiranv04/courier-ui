@@ -1,1396 +1,602 @@
-import { useEffect, useState } from "react";
-import { Plus, X, Save, FileText, RotateCcw } from "lucide-react";
-import toast from "react-hot-toast";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Search,
+  FileText,
+  CheckSquare,
+  Square,
+  ChevronRight,
+  Download,
+  AlertCircle,
+} from "lucide-react";
 import api from "../../services/api";
-import { roundTo2 } from "../../utils/money";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
-import { gstValidationMessage } from "../../utils/gst";
-import { set } from "react-hook-form";
+import { useAuth } from "../../hooks/useAuth"; // adjust path as needed
 
-const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceType, savedRates, totalInvoiceAmount, onSave }) => {
-  const [cft, setCft] = useState(10);
-  const [freight, setFreight] = useState(100);
-  const [fuel, setFuel] = useState(0.00);
-  const [awbFee, setAwbFee] = useState("");
-  const [fov, setFov] = useState(0.00);
-  const [insurance, setInsurance] = useState("owner");
-  const [fod, setFod] = useState(0.00);
-  const [dod, setDod] = useState(0.00);
-  const [oda, setOda] = useState(0.00);
-  const [handling, setHandling] = useState(0.00);
-  const [dcc, setDcc] = useState(0.00);
-  const [pickupcharges, setPickupcharges] = useState(0.00);
-  const [deliverycharges, setDeliverycharges] = useState(0.00);
-  const [otherCharges, setOtherCharges] = useState(0.00);
-  const [premiumCharges, setPremiumCharges] = useState(0.00);
-  const [chargeableWeight, setChargeableWeight] = useState("0.00");
-  const [packageYield, setPackageYield] = useState("");
-  const [disVolWeight, setDisVolWeight] = useState("");
-  const [carrierInsurance, setCarrierInsurance] = useState(0.00);
+// ── helpers ──────────────────────────────────────────────────────
+const fmt = (n) =>
+  Number(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const [fodDisabled, setFodDisabled] = useState(true);
-  const [dodDisabled, setDodDisabled] = useState(true);
-  const [fovDisabled, setFovDisabled] = useState(true);
-  const [cftDisabled, setCftDisabled] = useState(false);
+const today = new Date().toISOString().split("T")[0];
 
-  const [total, setTotal] = useState(0.00);
-  const [gst, setGst] = useState(0.00);
-  const [grandTotal, setGrandTotal] = useState(0.00);
+// First day of current month
+const firstOfMonth = new Date();
+firstOfMonth.setDate(1);
+const firstOfMonthStr = firstOfMonth.toISOString().split("T")[0];
 
-  // Fetch state mapping
-  const { data: rawCfts = [] } = useQuery({
-        queryKey: ["cfts"],
-        queryFn: () => api.get("/api/cfts").then(res => res.data.data || res.data || []),
-        staleTime: Infinity,
-    });
-
-    const cftMap = {};
-    rawCfts.forEach(cft => {
-        if (cft?.id && cft?.cft_value && cft?.is_active) {
-            cftMap[cft.id] = cft.cft_value;
-        }
-    });
-
-  useEffect(() => {
-    if (open && savedRates) {
-      setCft(savedRates.cft);
-      setFreight(savedRates.freight);
-      setFuel(savedRates.fuel);
-      setAwbFee(savedRates.awbFee);
-      setFov(savedRates.fov);
-      setFod(savedRates.fod);
-      setDod(savedRates.dod);
-      setOda(savedRates.oda);
-      setHandling(savedRates.handling);
-      setDcc(savedRates.dcc);
-      setPickupcharges(savedRates.pickupcharges);
-      setDeliverycharges(savedRates.deliverycharges);
-      setOtherCharges(savedRates.otherCharges);
-      setPremiumCharges(savedRates.premiumCharges);
-      setInsurance(savedRates.insurance);
-    }
-  }, [open]);
-  
-  useEffect(() => {
-    let volWeightRaw = 0;
-    if(serviceType === 'Apex'){
-      volWeightRaw = volWeight;
-      setCftDisabled(true);
-    } else{
-      volWeightRaw = cft * volWeight;
-      setCftDisabled(false);
-    }
-
-    const calculatedVolWeight = roundTo2(volWeightRaw);
-    setDisVolWeight(calculatedVolWeight.toFixed(2));
-
-    const chargableRaw = Math.max(weight, calculatedVolWeight);
-    const chargable = roundTo2(chargableRaw);
-    setChargeableWeight(chargable.toFixed(2));
-    const transportCharge = roundTo2(parseFloat(freight) + parseFloat(fuel));
-    const yieldRaw = transportCharge / chargable;
-    const yieldValue = roundTo2(yieldRaw);
-    setPackageYield(yieldValue.toFixed(2));
-  }, [cft, volWeight, freight, weight, fuel, serviceType]);
-
-  useEffect(() => {
-    const charges = [
-      freight, fuel, awbFee, fov, fod, dod, oda, handling, dcc, pickupcharges, deliverycharges, otherCharges, premiumCharges
-    ];
-
-    let baseTotal = 0;
-    charges.forEach(val => {
-      baseTotal = roundTo2(baseTotal + (parseFloat(val) || 0));
-    });
-
-    let ins = 0;
-    if (insurance === "carrier") {
-      let calins = roundTo2(totalInvoiceAmount * 0.02);
-      if (calins < 400){
-        ins = 400;
-      }else{
-        ins = calins;
-      }
-    }
-    setCarrierInsurance(ins.toFixed(2));
-
-    const caltotal = roundTo2(baseTotal + ins);
-    const gstVal = roundTo2(caltotal * 0.18);
-    const grandTotalVal = roundTo2(caltotal + gstVal);
-
-    setTotal(caltotal.toFixed(2));
-    setGst(gstVal.toFixed(2));
-    setGrandTotal(grandTotalVal.toFixed(2));
-
-  }, [freight, fuel, awbFee, fov, fod, dod, oda, handling, dcc, pickupcharges, deliverycharges, otherCharges, premiumCharges, insurance]);
-
-  useEffect(() => {
-    if(payment === "Regular"){
-      setFodDisabled(true);
-      setDodDisabled(true);
-    }else if(payment === "FOD"){
-      setFodDisabled(false);
-      setDodDisabled(true);
-    }else if(payment === "DOD"){
-      setFodDisabled(true);
-      setDodDisabled(false);
-    }else{
-      setFodDisabled(false);
-      setDodDisabled(false);
-    }
-  },[payment]);
-
-  const handleInsurance = (value) => {
-    setInsurance(value);
-
-    if(value === "owner"){
-      setFovDisabled(true);
-      setFov(0.00);
-      setCarrierInsurance(0.00);
-    }else{
-      setFovDisabled(false);
-    }
-  }
-
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 overflow-y-auto pt-8 pb-16">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="bg-linear-to-r from-teal-600 to-green-500 text-white px-6 py-4 rounded-t-2xl flex justify-between items-center">
-          <h2 className="text-2xl font-bold">CHARGES</h2>
-          <button
-            onClick={onClose}
-            className="text-white hover:text-gray-200 transition"
-            aria-label="Close"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Main content */}
-        <div className="p-6 space-y-6">
-          {/* Rates Section */}
-          <div className="bg-amber-200 justify-end px-4 py-1 rounded-full text-sm font-medium relative ">
-            <span className="mr-4">Yield: {packageYield}</span>
-            <span className="mr-4">Boxes: {boxes}</span>
-            <span className="mr-4">Actual Weight: {weight} kg</span>
-            <span className="mr-4">Vol Weight: {disVolWeight} kg</span>
-            <span className="mr-4">Chargeable Weight: {chargeableWeight} kg</span>
-          </div>
-          <div className="border rounded-xl overflow-hidden shadow-sm">
-            
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4 items-center pb-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2">CFT</label>
-                  <select value={cft} disabled={cftDisabled} onChange={(e) => setCft(e.target.value)} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${cftDisabled ? 'bg-gray-200' : ''}`}>
-                    {Object.entries(cftMap).map(([id, name]) => (
-                      <option key={id} value={name}>{name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">FREIGHT</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={freight}
-                    onChange={(e) => setFreight(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">FUEL</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={fuel}
-                    onChange={(e) => setFuel(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">AWB FEE</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={awbFee}
-                    onChange={(e) => setAwbFee(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">FOV</label>
-                  <input
-                    type="number"
-                    disabled={fovDisabled}
-                    value={fov}
-                    onChange={(e) => setFov(e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium ${fovDisabled ? 'bg-gray-200' : ''}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">INSURANCE</label>
-                  <select value={insurance} onChange={(e) => handleInsurance(e.target.value)} className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="owner">Owner's Risk</option>
-                    <option value="carrier">Carrier's Risk</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">FOD</label>
-                  <input
-                    type="number"
-                    disabled={fodDisabled}
-                    placeholder="0.00"
-                    value={fod}
-                    onChange={(e) => setFod(e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium ${fodDisabled ? 'bg-gray-200' : ''}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">DOD</label>
-                  <input
-                    type="number"
-                    disabled={dodDisabled}
-                    placeholder="0.00"
-                    value={dod}
-                    onChange={(e) => setDod(e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium ${dodDisabled ? 'bg-gray-200' : ''}`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">ODA Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    min={0}
-                    value={oda}
-                    onChange={(e) => setOda(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Handling Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={handling}
-                    onChange={(e) => setHandling(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">DCC Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={dcc}
-                    onChange={(e) => setDcc(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Pickup Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={pickupcharges}
-                    onChange={(e) => setPickupcharges(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Delivery Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={deliverycharges}
-                    onChange={(e) => setDeliverycharges(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Other Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={otherCharges}
-                    onChange={(e) => setOtherCharges(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Premium Charges</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={premiumCharges}
-                    onChange={(e) => setPremiumCharges(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-sm border-black focus:outline-none font-medium"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Totals */}
-          <div className="border-2 border-green-500 text-black rounded-xl p-4 grid grid-cols-3 gap-4 text-center font-semibold">
-            <div>
-              <div>Total :</div>
-              <div className="text-lg">{total}</div>
-            </div>
-            <div>
-              <div>GST @18% :</div>
-              <div className="text-lg">{gst}</div>
-            </div>
-            <div>
-              <div>Grand Total :</div>
-              <div className="text-lg">{grandTotal}</div>
-            </div>
-          </div>
-          <div className="flex gap-4 mt-6">
-            <button 
-              onClick={() => onSave({
-                cft, freight, fuel, awbFee, fov, fod, dod, oda,
-                handling, dcc, pickupcharges, deliverycharges, otherCharges, premiumCharges,
-                insurance, carrierInsurance,
-                chargeableWeight, packageYield,
-                total, gst, grandTotal
-              })} 
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition"
-            >
-              SAVE
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-400 hover:bg-gray-600 text-white py-3 rounded-xl font-semibold transition"
-            >
-              CANCEL
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
+// ── component ─────────────────────────────────────────────────────
 export default function CreateCorporateInvoice() {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const isEditMode = !!id;
 
+  // Auth
   const { data: user } = useAuth();
-  const isSuperAdmin = user?.roles?.[0]?.name === "super-admin" || user?.roles?.[0]?.name === "admin";
+  const isSuperAdmin =
+    user?.roles?.[0]?.name === "super-admin" ||
+    user?.roles?.[0]?.name === "admin";
+  const branchId = user?.owner_id;
 
-  const [selectedBranchId, setSelectedBranchId] = useState("");
+  // ── Step state ────────────────────────────────────────────────
+  // "filter" → user filling the form
+  // "preview" → shipments fetched, user reviewing
+  // "success" → invoice created
+  const [step, setStep] = useState("filter");
 
+  // ── Filter state ──────────────────────────────────────────────
+  const [selectedBranch, setSelectedBranch] = useState(
+    isSuperAdmin ? "" : String(branchId ?? "")
+  );
+  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [dateFrom, setDateFrom] = useState(firstOfMonthStr);
+  const [dateTo, setDateTo] = useState(today);
 
-  useEffect(() => {
-    if (!user) return;
-    if (!isSuperAdmin) {
-      setSelectedBranchId(user.owner_id?.toString() || "");
-    }
-  }, [user]);
+  // ── Preview state ─────────────────────────────────────────────
+  const [shipments, setShipments] = useState([]);   // full list from API
+  const [selected, setSelected] = useState({});     // { [id]: true/false }
+  const [createdInvoice, setCreatedInvoice] = useState(null);
+  const [pdfLoading, setPdfLoading]         = useState(false);
 
-  const [boxesCount, setBoxesCount] = useState(1);
-  const [weight, setWeight] = useState("");
-  const [vWeight, setVWeight] = useState("");
-  const [invoices, setInvoices] = useState([
-    { id: 1, invoiceNumber: "", invoiceAmount: 0, ewayBill: "" }
-  ]);
-  const [parcels, setParcels] = useState([
-    { id: 1, numBoxes: 1, length: 0, width: 0, height: 0, weight: 0 }
-  ]);
-  const [type, setType] = useState("company");
-  const [customerType, setCustomerType] = useState("cash");
-
-  const [modalOpen, setModalOpen] = useState(false);
-
-  // Form values
-  const [customerId, setCustomerId] = useState('');
-  const [shipperName, setShipperName] = useState('');
-  const [shipperCompany, setShipperCompany] = useState('');
-  const [shipperPhone, setShipperPhone] = useState('');
-  const [shipperPincode, setShipperPincode] = useState('');
-  const [shipperAddLine1, setShipperAddLine1] = useState('');
-  const [shipperAddLine2, setShipperAddLine2] = useState('');
-  const [shipperAddCity, setShipperAddCity] = useState('');
-  const [shipperState, setShipperState] = useState('');
-  const [shipperEmail, setShipperEmail] = useState('');
-  const [shipperGst, setShipperGst] = useState('');
-  const shippergstError = gstValidationMessage(shipperGst);
-
-  // Document dimensions
-  const [docLength, setDocLength] = useState(10);
-  const [docWidth, setDocWidth] = useState(10);
-  const [docHeight, setDocHeight] = useState(10);
-  const [docWeight, setDocWeight] = useState(0.1);
-
-  // For DOD and COD
-  const [inFavour, setInFavour] = useState("");
-  const [payableAt, setPayableAt] = useState("");
-  const [collectableAmount, setCollectableAmount] = useState("");
-
-  const [consigneeName, setConsigneeName] = useState('');
-  const [consigneePhone, setConsigneePhone] = useState('');
-  const [consigneePincode, setConsigneePincode] = useState('');
-  const [consigneeAddLine1, setConsigneeAddLine1] = useState('');
-  const [consigneeAddLine2, setConsigneeAddLine2] = useState('');
-  const [consigneeAddCity, setConsigneeAddCity] = useState('');
-  const [consigneeState, setConsigneeState] = useState('');
-  const [consigneeEmail, setConsigneeEmail] = useState('');
-  const [consigneeGst, setConsigneeGst] = useState('');
-  const [specialInstruction, setSpecialInstruction] = useState("");
-  const [receiverName, setReceiverName] = useState("");
-
-  const consigneegstError = gstValidationMessage(consigneeGst);
-
-  const [serviceType, setServiceType] = useState("");
-  const [service, setService] = useState("Parcel");
-  const [customerRef, setCustomerRef] = useState("");
-  const [parcelContent, setParcelContent] = useState("Electronics");
-  const [trackingNumber, setTrackingNumber] = useState("");
-  const [paymentMode, setPaymentMode] = useState("Regular");
-
-  const [savedRates, setSavedRates] = useState(null);
-
-  // Fetch existing shipment if in edit mode
-  const { data: existingShipment, isLoading: loadingShipment } = useQuery({
-    queryKey: ["shipment", id],
-    queryFn: () => api.get(`/api/shipments/${id}`).then(res => res.data.data),
-    enabled: isEditMode,
-    staleTime: Infinity,
-  });
-
-  // Fetch all branches for superadmin dropdown
-  const { data: allBranches = [] } = useQuery({
+  // ── Reference data ────────────────────────────────────────────
+  const { data: branches = [] } = useQuery({
     queryKey: ["branches"],
-    queryFn: () => api.get("/api/branches").then(res => res.data.data || []),
+    queryFn: () => api.get("/api/branches").then((r) => r.data.data ?? []),
+    staleTime: Infinity,
     enabled: isSuperAdmin,
+  });
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ["customers-corporate"],
+    queryFn: () =>
+      api.get("/api/customers?type=corporate").then((r) => r.data.data ?? []),
     staleTime: Infinity,
   });
 
-  // Branch query driven by selectedBranchId for both roles
-  const { data: branch } = useQuery({
-    queryKey: ["branch", selectedBranchId],
-    queryFn: () => api.get(`/api/branches/${selectedBranchId}`).then(res => res.data),
-    enabled: !!selectedBranchId,
-    staleTime: Infinity,
+  // ── Preview mutation ──────────────────────────────────────────
+  const previewMutation = useMutation({
+    mutationFn: (params) =>
+      api
+        .get("/api/invoices/preview-corporate", { params })
+        .then((r) => r.data),
+    onSuccess: (data) => {
+      const list = data.shipments ?? [];
+      setShipments(list);
+      // Pre-select all
+      const all = {};
+      list.forEach((s) => (all[s.id] = true));
+      setSelected(all);
+      setStep("preview");
+    },
   });
 
-  useEffect(() => {
-    if (!existingShipment) return;
-    const s = existingShipment;
+  // ── Create mutation ───────────────────────────────────────────
+  const createMutation = useMutation({
+    mutationFn: (body) =>
+      api.post("/api/invoices/corporate", body).then((r) => r.data),
+    onSuccess: (data) => {
+      setCreatedInvoice(data.data);
+      setStep("success");
+    },
+  });
 
-    if (isSuperAdmin && s.branch_id) {
-      setSelectedBranchId(s.branch_id.toString());
-    }
+  // ── Derived: selected shipment objects ────────────────────────
+  const selectedShipments = useMemo(
+    () => shipments.filter((s) => selected[s.id]),
+    [shipments, selected]
+  );
 
-    setService(s.service);
-    setServiceType(s.service_type || "");
-    setPaymentMode(s.payment_mode || "Regular");
-    setCustomerRef(s.customer_reference || "");
-    setParcelContent(s.parcel_content || "");
-    setTrackingNumber(s.awb_number || "");
-    setCustomerType(s.customer_type);
-    // setCustomerId(s.customer_id?.toString() || "");
+  // ── Derived: charge summary from selected rows ────────────────
+  const summary = useMemo(() => {
+    let freightVas = 0, fuel = 0, fodDod = 0;
 
-    setShipperName(s.shipper_name || "");
-    setShipperCompany(s.shipper_company_name || "");
-    setShipperPhone(s.shipper_phone || "");
-    setShipperEmail(s.shipper_email || "");
-    setShipperGst(s.shipper_gst || "");
-    setShipperAddLine1(s.shipper_address_line1 || "");
-    setShipperAddLine2(s.shipper_address_line2 || "");
-    setShipperAddCity(s.shipper_city || "");
-    setShipperState(s.shipper_state || "");
-    setShipperPincode(s.shipper_pincode || "");
+    selectedShipments.forEach((s) => {
+      const c = s.charges;
+      if (!c) return;
+      freightVas +=
+        Number(c.freight ?? 0) +
+        Number(c.awb_fee ?? 0) +
+        Number(c.fov ?? 0) +
+        Number(c.handling ?? 0) +
+        Number(c.oda ?? 0) +
+        Number(c.dcc ?? 0) +
+        Number(c.pickup_charges ?? 0) +
+        Number(c.delivery_charges ?? 0) +
+        Number(c.other_charges ?? 0) +
+        Number(c.premium_charges ?? 0) +
+        (c.insurance_type === "carrier" ? Number(c.carrier_insurance ?? 0) : 0);
+      fuel   += Number(c.fuel ?? 0);
+      fodDod += Number(c.fod ?? 0) + Number(c.dod ?? 0);
+    });
 
-    setConsigneeName(s.consignee_name || "");
-    setReceiverName(s.receiver_name || "");
-    setConsigneePhone(s.consignee_phone || "");
-    setConsigneeGst(s.consignee_gst || "");
-    setConsigneeAddLine1(s.consignee_address_line1 || "");
-    setConsigneeAddLine2(s.consignee_address_line2 || "");
-    setConsigneePincode(s.consignee_pincode || "");
-    setConsigneeAddCity(s.consignee_city || "");
+    const subtotal = freightVas + fuel + fodDod;
+    const gst      = Math.round(subtotal * 0.18 * 100) / 100;
 
-    setSpecialInstruction(s.special_instructions || "");
-    setInFavour(s.in_favour_of || "");
-    setPayableAt(s.payable_at || "");
-    setCollectableAmount(s.collectable_amount || "");
+    // Intra-state: compare branch state to majority consignee state
+    // For UI purposes we use the summary returned by the preview API
+    // but recompute here so it's reactive to row selection changes.
+    // We'll pass isIntraState from the API's summary on confirm.
 
-    if (s.parcels?.length) {
-      setParcels(s.parcels.map((p, i) => ({
-        id: i + 1,
-        length: p.length,
-        width: p.width,
-        height: p.height,
-        weight: p.weight,
-        numBoxes: p.num_boxes,
-        volWeight: p.vol_weight,
-      })));
-    }
+    return {
+      freightVas: Math.round(freightVas * 100) / 100,
+      fuel:       Math.round(fuel * 100)       / 100,
+      fodDod:     Math.round(fodDod * 100)     / 100,
+      subtotal:   Math.round(subtotal * 100)   / 100,
+      gst:        gst,
+      grandTotal: Math.round((subtotal + gst) * 100) / 100,
+    };
+  }, [selectedShipments]);
 
-    if (s.invoices?.length) {
-      setInvoices(s.invoices.map((inv, i) => ({
-        id: i + 1,
-        invoiceNumber: inv.invoice_number,
-        invoiceAmount: inv.invoice_amount,
-        ewayBill: inv.eway_bill || "",
-      })));
-    }
-
-    if (s.charges) {
-      setSavedRates({
-        cft: s.charges.cft,
-        freight: s.charges.freight,
-        fuel: s.charges.fuel,
-        awbFee: s.charges.awb_fee,
-        fov: s.charges.fov,
-        fod: s.charges.fod,
-        dod: s.charges.dod,
-        oda: s.charges.oda,
-        handling: s.charges.handling,
-        dcc: s.charges.dcc,
-        pickupcharges: s.charges.pickup_charges,
-        deliverycharges: s.charges.delivery_charges,
-        otherCharges: s.charges.other_charges,
-        premiumCharges: s.charges.premium_charges,
-        insurance: s.charges.insurance_type,
-        carrierInsurance: s.charges.carrier_insurance,
-        chargeableWeight: s.charges.chargeable_weight,
-        packageYield: s.charges.package_yield,
-        total: s.charges.total,
-        gst: s.charges.gst,
-        grandTotal: s.charges.grand_total,
+  const handleDownloadPdf = async (invoiceId, invoiceNumber) => {
+    setPdfLoading(true);
+    try {
+      const response = await api.get(`/api/invoices/${invoiceId}/pdf`, {
+        responseType: "blob",
       });
+      const url      = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link     = document.createElement("a");
+      link.href      = url;
+      link.download  = `VK-CORP-${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setPdfLoading(false);
     }
-  }, [existingShipment]);
-
-  const { data: existingCustomer, isLoading: isCustomerLoading } = useQuery({
-    queryKey: ["customer", existingShipment?.customer_id],
-    queryFn: () => api.get(`/api/customers/${existingShipment.customer_id}`).then(res => res.data.data || res.data),
-    enabled: isEditMode && !!existingShipment?.customer_id,
-  });
-
-  useEffect(() => {
-    if (!existingCustomer) return;
-    setCustomerType(existingCustomer.customer_type);
-    setCustomerId(existingCustomer.id);
-    setType(existingCustomer.type || "");
-  }, [existingCustomer]);
-
-  const { data : customers = [] } = useQuery({
-    queryKey: ["customers", customerType],
-    queryFn: () => api.get(`/api/customers?type=${customerType}`).then(res => res.data.data || res.data || []),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false
-  });
-
-  useEffect(() => {
-    if (isEditMode) return;
-    if (!customerId) {
-      setShipperName("");
-      setShipperCompany("");
-      setShipperPhone("");
-      setShipperAddLine1("");
-      setShipperAddLine2("");
-      setShipperAddCity("");
-      setShipperState("");
-      setShipperPincode("");
-      setShipperEmail("");
-      return;
-    }
-
-    const customer = customers.find(c => c.id === Number(customerId));
-    if (!customer) return;
-
-    setShipperName(customer.contact_person || "");
-    setShipperCompany(customer.company_name || "");
-    setShipperPhone(customer.contact_phone || "");
-    console.log("Customer Addresses:", customer);
-
-    const address = customer.addresses?.[0];
-      if (address && (address.address_type === "both" || address.address_type === "billing")) {
-      setShipperAddLine1(address.address_line1 || "");
-      setShipperAddLine2(address.address_line2 || "");
-      setShipperAddCity(address.city || "");
-      setShipperState(address.state || "");
-      setShipperPincode(address.pincode || "");
-      setShipperEmail(address.email || "");
-    }
-  }, [customerId, customers]);
-
-  useEffect(() => {
-    if (service === "Parcel") {
-      setParcels([
-        { id: 1, numBoxes: 1, length: "", width: "", height: "", weight: "" }
-      ]);
-      setBoxesCount(1);
-    }
-  }, [service]);
-
-  const totalBoxes = parcels.reduce((sum, p) => sum + (Number(p.numBoxes) || 0), 0);
-
-  let totalWeight = 0;
-  let volWeight = 0;
-  if (service === "Parcel") {
-    totalWeight = parcels.reduce((sum, p) => {
-      const weight = Number(p.weight) || 0;
-      const boxes = Number(p.numBoxes) || 0;
-      return sum + (weight * boxes);
-    }, 0);
-    volWeight = parcels.reduce((sum, p) => {
-      const length = Number(p.length) || 0;
-      const width = Number(p.width) || 0;
-      const height = Number(p.height) || 0;
-      const boxes = Number(p.numBoxes) || 0;
-      if(serviceType === 'Apex'){
-        return sum + ((length * width * height) / 5000) * boxes;
-      }else{
-        return sum + ((length * width * height) / 27000) * boxes;
-      }
-    }, 0).toFixed(2);
-  }else{
-    totalWeight = Number(docWeight) || 0;
-    volWeight = serviceType === 'Apex' ? ((docHeight * docLength * docWidth) / 5000).toFixed(2) : ((docHeight * docLength * docWidth) / 27000).toFixed(2);
-  }
-
-  const addParcel = () => {
-    setParcels([
-      ...parcels,
-      { id: parcels.length + 1, numBoxes: 1, length: 0, width: 0, height: 0, weight: 0 }
-    ]);
   };
+  
+  // ── Handlers ──────────────────────────────────────────────────
+  const handleFetch = () => {
+    if (!selectedCustomer) return;
+    const effectiveBranch = isSuperAdmin ? selectedBranch : branchId;
+    if (!effectiveBranch) return;
 
-  const removeParcel = (idToRemove) => {
-    const parcelToRemove = parcels.find(p => p.id === idToRemove);
-    if (parcelToRemove) {
-      const boxesRemoved = Number(parcelToRemove.numBoxes) || 0;
-      setBoxesCount(prev => Math.max(1, prev - boxesRemoved));
-    }
-    setParcels(parcels.filter(p => p.id !== idToRemove));
-  };
-
-  useEffect(() => {
-    setBoxesCount(totalBoxes);
-    setWeight(totalWeight.toFixed(2));
-    setVWeight(volWeight);
-  }, [totalBoxes, totalWeight, volWeight]);
-
-  const addInvoice = () => setInvoices([...invoices, { id: invoices.length + 1, invoiceNumber: "", invoiceAmount: "", ewayBill: "" }  ]);
-
-  const removeInvoice = (idToRemove) => {
-    setInvoices(invoices.filter(inv => inv.id !== idToRemove));
-  };
-
-  const totalInvoiceAmount = invoices.reduce((sum, i) => sum + (Number(i.invoiceAmount) || 0), 0);
-
-  const handleRate = () => {
-    setModalOpen(true);
-  }
-
-  const isYieldInvalid = savedRates && branch?.yield_ratio
-  && parseFloat(savedRates.packageYield) < parseFloat(branch.yield_ratio);
-
-  const validateInvoices = () => {
-    return invoices.every(inv => {
-      if (parseFloat(inv.invoiceAmount) >= 50000) {
-        if (!inv.ewayBill.trim()) return false;
-      }
-      return true;
+    previewMutation.mutate({
+      customer_id: selectedCustomer,
+      branch_id:   effectiveBranch,
+      from_date:   dateFrom,
+      to_date:     dateTo,
     });
   };
 
-  // Update mutation for edit mode
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => api.patch(`/api/shipments/${id}`, data),
-    onSuccess: (_, variables) => {
-      toast.success(variables.data.status === "booked" ? "Shipment booked!" : "Shipment updated!");
-      if(user.roles[0]?.name === 'super-admin' || user.roles[0]?.name === 'admin'){
-        navigate('/superadmin/bookings', { replace: true });
-      }else if(user.roles[0]?.name === 'branch-admin' || user.roles[0]?.name === 'branch-employee'){
-        navigate('/branch/bookings', { replace: true });
-      } 
-    },
-    onError: () => toast.error("Failed to update shipment"),
-  });
+  const toggleRow = (id) =>
+    setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const saveMutation = useMutation({
-    mutationFn: (data) => api.post("/api/shipments", data),
-    onSuccess: () => {
-      toast.success("Shipment saved!");
+  const toggleAll = () => {
+    const allSelected = selectedShipments.length === shipments.length;
+    const next = {};
+    shipments.forEach((s) => (next[s.id] = !allSelected));
+    setSelected(next);
+  };
 
-      if(user.roles[0]?.name === 'super-admin' || user.roles[0]?.name === 'admin'){
-        navigate('/superadmin/bookings', { replace: true });
-      }else if(user.roles[0]?.name === 'branch-admin' || user.roles[0]?.name === 'branch-employee'){
-        navigate('/branch/bookings', { replace: true });
-      }
-    },
-  });
+  const handleCreate = () => {
+    const effectiveBranch = isSuperAdmin ? selectedBranch : branchId;
+    createMutation.mutate({
+      customer_id:   Number(selectedCustomer),
+      branch_id:     Number(effectiveBranch),
+      from_date:     dateFrom,
+      to_date:       dateTo,
+      shipment_ids:  selectedShipments.map((s) => s.id),
+    });
+  };
 
-  const handleSave = (status) => {
-    if (isSuperAdmin && !selectedBranchId) {
-      toast.error("Please select a branch first");
-      return;
-    }
-
-    if (service === "Parcel" && !validateInvoices()) {
-      toast.error("E-Way Bill is mandatory for invoices of ₹50,000 or more");
-      return;
-    }
-
-    if (isYieldInvalid) {
-      toast.error(`Yield is below the branch minimum of ${branch?.yield_ratio}`);
-      return;
-    }
-
-    if (!selectedBranchId) {
-      toast.error("Branch not resolved. Please try again.");
-      return;
-    }
-
-    let payload = {};
-    
-    if (service === "Parcel"){
-      payload = {
-        status,
-        ...(isSuperAdmin && { branchId: Number(selectedBranchId), }),
-        shipper: { shipperName, shipperCompany, shipperEmail, shipperPhone, shipperAddLine1, shipperAddLine2, shipperAddCity, shipperState, shipperPincode, shipperGst },
-        service: { serviceType, service, customerRef, parcelContent, trackingNumber, paymentMode },
-        parcels,
-        invoices,
-        rates: savedRates,
-        customer: { customerId, customerType },
-        specialInstruction: specialInstruction.trim() ? specialInstruction : null,
-        consignee: { consigneeName, receiverName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeGst },
-        dodCodDetails: { inFavour, payableAt, collectableAmount }
-      };
-    } else{
-      payload = {
-        status,
-        ...(isSuperAdmin && { branchId: selectedBranchId }),
-        shipper: { shipperName, shipperCompany, shipperEmail, shipperPhone, shipperAddLine1, shipperAddLine2, shipperAddCity, shipperState, shipperPincode, shipperGst },
-        service: { serviceType, service, customerRef, parcelContent, trackingNumber, paymentMode },
-        customer: { customerId, customerType },
-        rates: savedRates,
-        specialInstruction: specialInstruction.trim() ? specialInstruction : null,
-        consignee: { consigneeName, receiverName, consigneePhone, consigneeAddLine1, consigneeAddLine2, consigneeAddCity, consigneePincode, consigneeGst },
-        docDimensions: { length: docLength, width: docWidth, height: docHeight, weight: docWeight },
-        dodCodDetails: { inFavour, payableAt, collectableAmount }
-      };
-    }
-    // console.log("Payload to save:", payload);
-    if (isEditMode) {
-      updateMutation.mutate({ id, data: payload });
+  const handleBack = () => {
+    if (step === "preview") {
+      setStep("filter");
+      setShipments([]);
     } else {
-      saveMutation.mutate(payload);
+      navigate(-1);
     }
   };
 
-  const handleClear = () => {
-    setBoxesCount(1);
-    setService("Parcel");setInvoices([{ id: 1, invoiceNumber: "", invoiceAmount: "", ewayBill: "" }]);
-    setParcels([{ id: 1, numBoxes: 1, length: "", width: "", height: "", weight: "" }]);
-    setService("Parcel");
-    setServiceType("");
-    setDocLength("10");
-    setDocWidth("10");
-    setDocHeight("10");
-    setDocWeight("0.1");
-    setSavedRates(null);
-    toast.success("Form cleared");
-  };
-
+  // ── RENDER ────────────────────────────────────────────────────
   return (
-    <div className="p-6 md:p-8 bg-white rounded-2xl shadow-2xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Create Shipment</h1>
-        <div className="bg-blue-100 text-blue-700 px-5 py-2 rounded-full font-medium text-lg">
-          <span className="mr-5">Boxes: {boxesCount}</span>
-          <span>Weight: {weight} kg</span>
+    <div className="p-6 max-w-6xl mx-auto">
+
+      {/* ── Page header ── */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={handleBack}
+          className="text-gray-500 hover:text-gray-800 transition cursor-pointer"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Create Corporate Invoice
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {step === "filter"
+              ? "Select a customer and date range to fetch uninvoiced shipments."
+              : step === "preview"
+              ? "Review and deselect any shipments before confirming."
+              : "Invoice created successfully."}
+          </p>
         </div>
       </div>
 
-      {isSuperAdmin && (
-        <div className="border rounded-xl overflow-hidden">
-          <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold">
-            Branch
-          </div>
-          <div className="p-6">
-            <div className="max-w-sm">
-              <label className="block text-sm font-medium mb-2">
-                Select Branch <span className="text-red-500">*</span>
+      {/* ── Step indicator ── */}
+      <div className="flex items-center gap-2 mb-8 text-sm">
+        {["filter", "preview", "success"].map((s, i) => {
+          const labels = ["Filter", "Review", "Done"];
+          const active = step === s;
+          const done =
+            (s === "filter" && (step === "preview" || step === "success")) ||
+            (s === "preview" && step === "success");
+          return (
+            <div key={s} className="flex items-center gap-2">
+              <span
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
+                  ${active ? "bg-blue-600 text-white" : done ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}
+              >
+                {i + 1}
+              </span>
+              <span className={active ? "font-semibold text-gray-900" : "text-gray-400"}>
+                {labels[i]}
+              </span>
+              {i < 2 && <ChevronRight size={14} className="text-gray-300" />}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ════════════════════════════════════════
+          STEP 1 — Filter form
+          ════════════════════════════════════════ */}
+      {step === "filter" && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 max-w-xl">
+          <h2 className="text-base font-semibold text-gray-800 mb-5">
+            Shipment Criteria
+          </h2>
+
+          <div className="space-y-4">
+            {/* Branch — only for super-admin / admin */}
+            {isSuperAdmin && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Branch <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select branch…</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Customer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Customer <span className="text-red-500">*</span>
               </label>
               <select
-                value={selectedBranchId}
-                onChange={(e) => setSelectedBranchId(e.target.value)}
-                disabled={isEditMode}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
-                  ${isEditMode ? "bg-gray-100 cursor-not-allowed" : ""}
-                  ${isSuperAdmin && !selectedBranchId ? "border-red-300" : ""}`}
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select a branch to continue</option>
-                {allBranches.filter(b => b.is_active).map(b => (
-                  <option key={b.id} value={b.id}>{b.name} — {b.code}</option>
+                <option value="">Select corporate customer…</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.company_name}
+                    {c.contact_person ? ` — ${c.contact_person}` : ""}
+                  </option>
                 ))}
               </select>
-              {isSuperAdmin && !selectedBranchId && (
-                <p className="text-red-500 text-xs mt-1">
-                  Please select a branch before filling in shipment details
-                </p>
-              )}
             </div>
-          </div>
-        </div>
-      )}
-      {(!isSuperAdmin || selectedBranchId) ? (
-      <> 
-        <div className="space-y-8 mt-8">
-          {/* Customr Selection */}
-          <div className="border rounded-xl overflow-hidden">
-            <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold">Pickup Address</div>
-            <div className="p-6 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Select Customer Type <span className="text-red-500">*</span></label>
-                  <select onChange={(e) => setCustomerType(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="cash">Cash</option>
-                    <option value="corporate">RCMF</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Select Customer <span className="text-red-500">*</span></label>
-                  <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Customer</option>
-                    {customers.map(c => (
-                      <option key={c.id} value={c.id}>{c.company_name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Name <span className="text-red-500">*</span></label>
-                  <div className="flex gap-3">
-                    <input type="text" placeholder="Name" value={shipperName} onChange={(e) => setShipperName(e.target.value)} className="w-full flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Company Name <span className="text-red-500">*</span></label>
-                  <div className="flex gap-3">
-                    <input type="text" value={shipperCompany} onChange={(e) => setShipperCompany(e.target.value)} placeholder="Company Name" className="w-full flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Phone Number <span className="text-red-500">*</span></label>
-                  <input type="text" value={shipperPhone} maxLength={10} onChange={(e) => setShipperPhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email <span className="text-red-500">*</span></label>
-                  <input type="email" value={shipperEmail} onChange={(e) => setShipperEmail(e.target.value)} placeholder="Email" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Address Line 1 <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={shipperAddLine1}
-                    onChange={(e) => setShipperAddLine1(e.target.value)}
-                    placeholder="Address line 1"
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Address Line 2 <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={shipperAddLine2}
-                    onChange={(e) => setShipperAddLine2(e.target.value)}
-                    placeholder="Address line 2"
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">City <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={shipperAddCity}
-                    onChange={(e) => setShipperAddCity(e.target.value)}
-                    placeholder="City"
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2">Pincode <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input type="text" value={shipperPincode} onChange={(e) => setShipperPincode(e.target.value)} placeholder="Pincode" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${shippergstError ? "border-red-400" : ""}`} />
-                  </div>
-                </div>
-                {type === "company" && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Sender GST Number <span className="text-red-500">*</span></label>
-                    <input type="text" minLength={15} maxLength={15} value={shipperGst} onChange={(e) => setShipperGst(e.target.value)} placeholder="GST Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    {shippergstError && <p className="text-red-500 text-xs mt-1">{shippergstError}</p>}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Service Details */}
-          <div className="border rounded-xl overflow-hidden">
-            <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold">Service Details</div>
-            <div className="p-6 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Service Type <span className="text-red-700">*</span></label>
-                  <select
-                    value={serviceType}
-                    onChange={(e) => setServiceType(e.target.value)}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Service Type</option>
-                    <option value="Surface">Surface</option>
-                    <option value="Apex">Apex</option>
-                    <option value="Domestic Priority">Domestic Priority</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-3">Select Service</label>
-                  <div className="flex gap-8">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="service"
-                        value="Parcel"
-                        checked={service === "Parcel"}
-                        onChange={(e) => setService(e.target.value)} 
-                        className="w-5 h-5 accent-blue-600" 
-                      />
-                      Parcel
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="service"
-                        value="Document"
-                        checked={service === "Document"}
-                        onChange={(e) => setService(e.target.value)}
-                        className="w-5 h-5 accent-blue-600"
-                      />
-                      Document
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2">Customer Reference</label>
-                  <div className="relative">
-                    <input type="text" value={customerRef} onChange={(e) => setCustomerRef(e.target.value)} placeholder="Customer Reference" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Parcel Content</label>
-                  <input type="text" value={parcelContent} onChange={(e) => setParcelContent(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-
-              <div className="relative">
-                <label className="block text-sm font-medium mb-2">
-                  AWB / Tracking Number
-                  <span className="ml-2 text-xs text-gray-400 font-normal">(leave blank to auto-generate)</span>
+            {/* Date range */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  From <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <input type="text" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="Tracking Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-                </div>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
-
-              {service === "Parcel" && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">Payment Mode</label>
-                  <select
-                    value={paymentMode}
-                    onChange={(e) => setPaymentMode(e.target.value)}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Regular">Regular</option>
-                    <option value="FOD">FOD</option>
-                    <option value="DOD">DOD</option>
-                    <option value="COD">COD</option>
-                  </select>
-                </div>
-              )}
-              {(paymentMode === "DOD" || paymentMode === "COD") && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">In Favour Of <span className="text-red-700">*</span></label>
-                    <input type="text" value={inFavour} onChange={(e) => setInFavour(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Payable At <span className="text-red-700">*</span></label>
-                    <input type="text" value={payableAt} onChange={(e) => setPayableAt(e.target.value)} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Collectable Amount <span className="text-red-700">*</span></label>
-                    <input type="text" value={collectableAmount} onChange={(e) => setCollectableAmount(e.target.value)} placeholder="₹ 0.00" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div> 
-              )}
-            </div>
-          </div>
-
-          {/* Invoices */}
-          {service === "Parcel" &&
-            invoices.map((invoice, index) => (
-            <div key={invoice.id} className="border rounded-xl overflow-hidden">
-              <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold flex justify-between items-center">
-                <span>Invoice #{index+1}</span>
-                <div className="flex items-center gap-2">
-                  {invoice.id === invoices[invoices.length - 1].id && (
-                    <button onClick={addInvoice} className="bg-white/20 p-2 rounded-lg hover:bg-white/30 transition">
-                      <Plus size={20} />
-                    </button>
-                  )}
-                  {index > 0 && (
-                    <button
-                      onClick={() => removeInvoice(invoice.id)}
-                      className="text-red-500 bg-white hover:text-red-100 transition p-1 rounded hover:bg-red-900/30"
-                    >
-                      <X size={20} />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2">Invoice Number</label>
-                  <input
-                    type="text"
-                    placeholder="Invoice Number"
-                    value={invoice.invoiceNumber}
-                    onChange={(e) => setInvoices(invoices.map(inv =>
-                      inv.id === invoice.id ? { ...inv, invoiceNumber: e.target.value } : inv
-                    ))}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Invoice Amount</label>
-                  <input
-                    type="number"
-                    placeholder="₹ 0.00"
-                    value={invoice.invoiceAmount}
-                    onChange={(e) => setInvoices(invoices.map(inv =>
-                      inv.id === invoice.id ? { ...inv, invoiceAmount: e.target.value } : inv
-                    ))}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="md:col-span-2 relative">
-                  <label className="block text-sm font-medium mb-2">
-                    EwayBill Number
-                    {parseFloat(invoice.invoiceAmount) >= 50000 && (
-                      <span className="text-red-500 ml-1">* Required</span>
-                    )}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="EwayBill Number"
-                    minLength={12}
-                    maxLength={12}
-                    value={invoice.ewayBill}
-                    onChange={(e) => setInvoices(invoices.map(inv =>
-                      inv.id === invoice.id ? { ...inv, ewayBill: e.target.value } : inv
-                    ))}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
-                    ${parseFloat(invoice.invoiceAmount) >= 50000 && !invoice.ewayBill.trim() 
-                      ? "border-red-400 bg-red-50" 
-                      : ""
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {service === "Document" && (
-            <div className="border rounded-xl overflow-hidden">
-              <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold">
-                Document Dimensions
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Length</label>
-                    <input
-                      type="text"
-                      value={docLength}
-                      onChange={(e) => setDocLength(e.target.value)}
-                      placeholder="Length"
-                      className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Width (cm)</label>
-                    <input
-                      type="text"
-                      value={docWidth}
-                      onChange={(e) => setDocWidth(e.target.value)}
-                      placeholder="Width"
-                      className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Height (cm)</label>
-                    <input
-                      type="text"
-                      value={docHeight}
-                      onChange={(e) => setDocHeight(e.target.value)}
-                      placeholder="Height"
-                      className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Weight (kg)</label>
-                    <input
-                      type="text"
-                      value={docWeight}
-                      onChange={(e) => setDocWeight(e.target.value)}
-                      placeholder="Weight"
-                      className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Parcel Dimensions */}
-          {service === "Parcel" && parcels.map((parcel, index) => (
-            <div key={parcel.id} className="border rounded-xl overflow-hidden">
-              <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold flex justify-between items-center">
-                <span>Parcel Dimensions #{index + 1}</span>
-                <div className="flex items-center gap-2">
-                  {parcel.id === parcels[parcels.length - 1].id && (
-                    <button
-                      onClick={addParcel}
-                      className="bg-white text-black p-2 rounded-lg hover:bg-white/30 transition"
-                    >
-                      <Plus size={20} />
-                    </button>
-                  )}
-                  {parcel.id > 1 && (
-                    <button
-                      onClick={() => removeParcel(parcel.id)}
-                      className="bg-white text-red-500 p-2 rounded-lg hover:bg-white/30 transition"
-                    >
-                      <X size={20} />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Length"
-                    value={parcel.length}
-                    onChange={(e) => {
-                      const newParcels = parcels.map(p =>
-                        p.id === parcel.id ? { ...p, length: e.target.value } : p
-                      );
-                      setParcels(newParcels);
-                    }}
-                    className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Width"
-                    value={parcel.width}
-                    onChange={(e) => {
-                      const newParcels = parcels.map(p =>
-                        p.id === parcel.id ? { ...p, width: e.target.value } : p
-                      );
-                      setParcels(newParcels);
-                    }}
-                    className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Height"
-                    value={parcel.height}
-                    onChange={(e) => {
-                      const newParcels = parcels.map(p =>
-                        p.id === parcel.id ? { ...p, height: e.target.value } : p
-                      );
-                      setParcels(newParcels);
-                    }}
-                    className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Weight"
-                    value={parcel.weight}
-                    onChange={(e) => {
-                      const newParcels = parcels.map(p =>
-                        p.id === parcel.id ? { ...p, weight: e.target.value } : p
-                      );
-                      setParcels(newParcels);
-                    }}
-                    className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Number of boxes</label>
-                  <input
-                    type="text"
-                    value={parcel.numBoxes}
-                    onChange={(e) => {
-                      const newNum = Math.max(1, Number(e.target.value) || 1);
-                      const newParcels = parcels.map(p =>
-                        p.id === parcel.id ? { ...p, numBoxes: newNum } : p
-                      );
-                      setParcels(newParcels);
-                    }}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Delivery Address */}
-          <div className="border rounded-xl overflow-hidden">
-            <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold">Delivery Address</div>
-            <div className="p-6 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Consignee Name <span className="text-red-500">*</span></label>
-                  <div className="flex gap-3">
-                    <input type="text" value={consigneeName} onChange={(e) => setConsigneeName(e.target.value)} placeholder="Consignee Name" className="flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Receiver Name <span className="text-red-500">*</span></label>
-                  <div className="flex gap-3">
-                    <input type="text" value={receiverName} onChange={(e) => setReceiverName(e.target.value)} placeholder="Receiver Name" className="flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Phone Number</label>
-                  <input type="text" value={consigneePhone} maxLength={10} onChange={(e) => setConsigneePhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2">Address Line 1 <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input type="text" value={consigneeAddLine1} onChange={(e) => setConsigneeAddLine1(e.target.value)} placeholder="Pincode" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-                  </div>
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2">Address Line 2 <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input type="text" value={consigneeAddLine2} onChange={(e) => setConsigneeAddLine2(e.target.value)} placeholder="Pincode" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-                  </div>
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2">City <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input type="text" value={consigneeAddCity} onChange={(e) => setConsigneeAddCity(e.target.value)} placeholder="City" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-                  </div>
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-2">Pincode <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input type="text" value={consigneePincode} onChange={(e) => setConsigneePincode(e.target.value)} placeholder="Pincode" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Receiver GST Number <span className="text-red-500">*</span></label>
-                  <input type="text" minLength={15} maxLength={15} value={consigneeGst} onChange={(e) => setConsigneeGst(e.target.value)} placeholder="GST Number" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${consigneegstError ? 'border-red-500' : ''}`} />
-                  {consigneegstError && <p className="text-red-500 text-xs mt-1">{consigneegstError}</p>}
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  To <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
             </div>
           </div>
 
-          {/* Special Instruction */}
-          <div className="border rounded-xl overflow-hidden">
-            <div className="bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-4 font-semibold">Special Instruction</div>
-            <div className="p-6">
-              <textarea value={specialInstruction} onChange={(e) => setSpecialInstruction(e.target.value)} placeholder="Enter any special instructions..."  rows={3} className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-          </div>
-
-          {savedRates && branch?.yield_ratio && parseFloat(savedRates.packageYield) < parseFloat(branch.yield_ratio) && (
-            <div className="border border-red-300 bg-red-50 text-red-700 rounded-xl px-5 py-3 text-sm font-medium flex items-center gap-2">
-              <span>⚠️</span>
+          {/* Error */}
+          {previewMutation.isError && (
+            <div className="mt-4 flex items-start gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <span>
-                Saved yield ({savedRates.packageYield}) is below this branch's minimum of {branch.yield_ratio}. 
-                Please update the rates before saving.
+                {previewMutation.error?.response?.data?.message ??
+                  "Failed to fetch shipments. Please try again."}
               </span>
             </div>
           )}
-          
-          {/* {customerType === "cash" && ( */}
-            <div className="border rounded-xl overflow-hidden">
-              <div className="flex bg-linear-to-r from-teal-700 to-teal-500 text-white px-6 py-2 font-semibold justify-between">
-                <span className="mt-1">Update Rates</span>
-                {/* <div className="flex items-center gap-2"> */}
-                  <button onClick={handleRate} className="bg-white text-black p-2 rounded-lg hover:bg-white/30 transition">
-                    <Plus size={20} />
-                  </button>
-                {/* </div> */}
-              </div>
-            </div>
-          {/* )} */}
-          
-        </div>
 
-        {/* Bottom Buttons */}
-        <div className="flex flex-wrap gap-4 mt-10">
-          <button onClick={() => handleSave("draft")} className="flex-1 min-w-35 bg-linear-to-r from-blue-500 to-teal-400 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition">
-            <Save size={20} />
-            {isEditMode ? "Update" : "Save"}
+          {/* Validation hint */}
+          {previewMutation.data?.shipments?.length === 0 && (
+            <div className="mt-4 flex items-start gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>No uninvoiced shipments found for this customer and period.</span>
+            </div>
+          )}
+
+          <button
+            onClick={handleFetch}
+            disabled={
+              previewMutation.isPending ||
+              !selectedCustomer ||
+              (isSuperAdmin && !selectedBranch)
+            }
+            className="mt-6 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition text-sm cursor-pointer"
+          >
+            <Search size={16} />
+            {previewMutation.isPending ? "Fetching…" : "Fetch Shipments"}
           </button>
-          <button onClick={() => handleSave("booked")} className="flex-1 min-w-35 bg-linear-to-r from-orange-500 to-amber-400 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition">
-            <FileText size={20} />
-            {isEditMode ? "Update & Book" : "Save and Book"}
-          </button>
-          <button onClick={handleClear} className="flex-1 min-w-35 bg-gray-300 hover:bg-gray-400 text-gray-800 py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition">
-            <RotateCcw size={20} />
-            Clear
-          </button>
-        </div>
-      </>
-      ) : (
-        <div className="border-2 border-dashed border-gray-200 rounded-xl py-16 text-center text-gray-400">
-          <p className="text-lg">Select a branch above to start creating a shipment</p>
         </div>
       )}
-      <RateModal 
-        open={modalOpen} 
-        onClose={() => setModalOpen(false)} 
-        payment={paymentMode} 
-        boxes={totalBoxes} 
-        weight={weight} 
-        volWeight={vWeight}
-        serviceType={serviceType}
-        savedRates={savedRates}
-        totalInvoiceAmount={totalInvoiceAmount}
-        onSave={(rates) => {
-          setSavedRates(rates);
-          setModalOpen(false);
-        }}
-      />
+
+      {/* ════════════════════════════════════════
+          STEP 2 — Review shipments
+          ════════════════════════════════════════ */}
+      {step === "preview" && (
+        <div className="space-y-5">
+
+          {/* Info bar */}
+          <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm">
+            <span className="text-blue-800">
+              <span className="font-semibold">{shipments.length}</span> uninvoiced shipment
+              {shipments.length !== 1 ? "s" : ""} found.{" "}
+              <span className="font-semibold">{selectedShipments.length}</span> selected.
+            </span>
+            <button
+              onClick={handleBack}
+              className="text-blue-600 hover:text-blue-800 text-xs underline cursor-pointer"
+            >
+              Change filters
+            </button>
+          </div>
+
+          <div className="flex gap-5 items-start">
+
+            {/* ── Shipment table ── */}
+            <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="p-3 w-10">
+                      <button onClick={toggleAll} className="cursor-pointer text-gray-500 hover:text-gray-800">
+                        {selectedShipments.length === shipments.length
+                          ? <CheckSquare size={16} className="text-blue-600" />
+                          : <Square size={16} />}
+                      </button>
+                    </th>
+                    <th className="p-3 text-left font-medium text-gray-600">S.No</th>
+                    <th className="p-3 text-left font-medium text-gray-600">AWB</th>
+                    <th className="p-3 text-left font-medium text-gray-600">Ship Date</th>
+                    <th className="p-3 text-left font-medium text-gray-600">Destination</th>
+                    <th className="p-3 text-left font-medium text-gray-600">Type</th>
+                    <th className="p-3 text-right font-medium text-gray-600">Chrg Wt (kg)</th>
+                    <th className="p-3 text-right font-medium text-gray-600">Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shipments.map((s, i) => {
+                    const isChecked = !!selected[s.id];
+                    return (
+                      <tr
+                        key={s.id}
+                        onClick={() => toggleRow(s.id)}
+                        className={`border-t border-gray-100 cursor-pointer transition
+                          ${isChecked ? "bg-white hover:bg-gray-50" : "bg-gray-50 opacity-50 hover:opacity-70"}`}
+                      >
+                        <td className="p-3 text-center">
+                          {isChecked
+                            ? <CheckSquare size={15} className="text-blue-600 mx-auto" />
+                            : <Square size={15} className="text-gray-400 mx-auto" />}
+                        </td>
+                        <td className="p-3 text-gray-500">{i + 1}</td>
+                        <td className="p-3 font-mono font-semibold text-gray-900">
+                          {s.awb_number}
+                        </td>
+                        <td className="p-3 text-gray-600">
+                          {s.booked_at
+                            ? new Date(s.booked_at).toLocaleDateString("en-IN")
+                            : "—"}
+                        </td>
+                        <td className="p-3 text-gray-700">{s.consignee_city ?? "—"}</td>
+                        <td className="p-3 text-gray-600">
+                          {s.service_type ?? s.service ?? "—"}
+                        </td>
+                        <td className="p-3 text-right text-gray-700">
+                          {fmt(s.charges?.chargeable_weight)}
+                        </td>
+                        <td className="p-3 text-right font-semibold text-gray-900">
+                          {fmt(s.charges?.grand_total)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="border-t-2 border-gray-300 bg-gray-50">
+                  <tr>
+                    <td colSpan={7} className="p-3 text-right text-sm font-semibold text-gray-700">
+                      Selected Total
+                    </td>
+                    <td className="p-3 text-right font-bold text-gray-900">
+                      ₹{fmt(selectedShipments.reduce((acc, s) => acc + Number(s.charges?.grand_total ?? 0), 0))}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* ── Charge summary panel ── */}
+            <div className="w-72 shrink-0 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sticky top-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
+                Charge Summary
+              </h3>
+
+              <div className="space-y-2.5 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Freight</span>
+                  <span className="font-medium">₹{fmt(summary.freightVas)}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Fuel</span>
+                  <span className="font-medium">₹{fmt(summary.fuel)}</span>
+                </div>
+                {summary.fodDod > 0 && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>FOD / DOD</span>
+                    <span className="font-medium">₹{fmt(summary.fodDod)}</span>
+                  </div>
+                )}
+
+                <div className="border-t border-gray-200 pt-2.5 flex justify-between font-semibold text-gray-800">
+                  <span>Subtotal</span>
+                  <span>₹{fmt(summary.subtotal)}</span>
+                </div>
+
+                <div className="flex justify-between text-gray-600">
+                  <span>GST @ 18%</span>
+                  <span className="font-medium">₹{fmt(summary.gst)}</span>
+                </div>
+
+                <div className="border-t-2 border-gray-300 pt-3 flex justify-between text-base font-bold text-gray-900">
+                  <span>Grand Total</span>
+                  <span>₹{fmt(summary.grandTotal)}</span>
+                </div>
+              </div>
+
+              {/* Shipment count guard */}
+              {selectedShipments.length === 0 && (
+                <p className="mt-4 text-xs text-amber-600 bg-amber-50 rounded-lg p-2 text-center">
+                  Select at least one shipment to proceed.
+                </p>
+              )}
+
+              {/* Error */}
+              {createMutation.isError && (
+                <div className="mt-3 flex items-start gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5 text-xs">
+                  <AlertCircle size={13} className="mt-0.5 shrink-0" />
+                  <span>
+                    {createMutation.error?.response?.data?.message ??
+                      "Failed to create invoice."}
+                  </span>
+                </div>
+              )}
+
+              <button
+                onClick={handleCreate}
+                disabled={createMutation.isPending || selectedShipments.length === 0}
+                className="mt-5 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition text-sm cursor-pointer"
+              >
+                <FileText size={15} />
+                {createMutation.isPending ? "Creating…" : "Create Invoice"}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════
+          STEP 3 — Success
+          ════════════════════════════════════════ */}
+      {step === "success" && createdInvoice && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 max-w-md">
+          <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
+            <FileText size={22} className="text-green-600" />
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Invoice Created</h2>
+          <p className="text-sm text-gray-500 mb-5">
+            Invoice{" "}
+            <span className="font-mono font-semibold text-gray-800">
+              {createdInvoice.invoice_number}
+            </span>{" "}
+            has been finalized with{" "}
+            {createdInvoice.shipments?.length ?? selectedShipments.length} shipment
+            {(createdInvoice.shipments?.length ?? selectedShipments.length) !== 1 ? "s" : ""}.
+          </p>
+
+          {/* Summary recap */}
+          <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1.5 mb-6">
+            <div className="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>₹{fmt(createdInvoice.subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>GST</span>
+              <span>
+                ₹{fmt(
+                  Number(createdInvoice.cgst ?? 0) +
+                  Number(createdInvoice.sgst ?? 0) +
+                  Number(createdInvoice.igst ?? 0)
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between font-bold text-gray-900 border-t border-gray-200 pt-2">
+              <span>Grand Total</span>
+              <span>₹{fmt(createdInvoice.grand_total)}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => downloadPdf(createdInvoice.id, createdInvoice.invoice_number)}
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition text-sm"
+            >
+              <Download size={15} />
+               {pdfLoading ? "Generating…" : "Download PDF"}
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg transition text-sm cursor-pointer"
+            >
+              Back to Invoices
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
