@@ -30,6 +30,9 @@ import CashInvoice from './pages/superadmin/CashInvoice';
 import BranchCashInvoice from './pages/branch/BranchCashInvoice';
 import CorporateInvoice from './pages/superadmin/CorporateInvoice';
 import CreateCorporateInvoice from './pages/superadmin/CreateCorporateInvoice';
+import AdminReports from './pages/superadmin/AdminReports';
+import ShipmentReport from './pages/shared/ShipmentReport';
+import InvoiceReport from './pages/shared/InvoiceReport';
 
 const queryClient = new QueryClient();
 
@@ -82,6 +85,10 @@ function AppRoutes() {
           <Route path="/superadmin/corporate-invoices/create" element={<CreateCorporateInvoice />} />
 
           <Route path="/superadmin/manifests" element={<Manifests />} />
+
+          <Route path="/superadmin/reports" element={<AdminReports />} />
+          <Route path="/superadmin/reports/shipments" element={<ShipmentReport />} />
+          <Route path="/superadmin/reports/invoice" element={<InvoiceReport />} />
         </Route>
       </Route>
 

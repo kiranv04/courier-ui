@@ -513,7 +513,7 @@ export default function CreateShipment() {
     setShipperAddLine1(s.shipper_address_line1 || "");
     setShipperAddLine2(s.shipper_address_line2 || "");
     setShipperAddCity(s.shipper_city || "");
-    setShipperState(s.shipper_state || "");
+    setShipperState(s.shipper_state_id || "");
     setShipperPincode(s.shipper_pincode || "");
 
     setConsigneeName(s.consignee_name || "");
@@ -524,6 +524,7 @@ export default function CreateShipment() {
     setConsigneeAddLine2(s.consignee_address_line2 || "");
     setConsigneePincode(s.consignee_pincode || "");
     setConsigneeAddCity(s.consignee_city || "");
+    setConsigneeState(s.consignee_state_id || "");
 
     setSpecialInstruction(s.special_instructions || "");
     setInFavour(s.in_favour_of || "");
@@ -542,8 +543,8 @@ export default function CreateShipment() {
       })));
     }
 
-    if (s.invoices?.length) {
-      setInvoices(s.invoices.map((inv, i) => ({
+    if (s.shipment_invoices?.length) {
+      setInvoices(s.shipment_invoices.map((inv, i) => ({
         id: i + 1,
         invoiceNumber: inv.invoice_number,
         invoiceAmount: inv.invoice_amount,
@@ -1355,7 +1356,7 @@ export default function CreateShipment() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Receiver GST Number <span className="text-red-500">*</span></label>
-                  <input type="text" minLength={15} maxLength={15} value={consigneeGst} onChange={(e) => setConsigneeGst(e.target.value)} placeholder="GST Number" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${consigneegstError ? 'border-red-500' : ''}`} />
+                  <input type="text" minLength={15} maxLength={15} value={consigneeGst} onChange={(e) => setConsigneeGst(e.target.value.toUpperCase())} placeholder="GST Number" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${consigneegstError ? 'border-red-500' : ''}`} />
                   {consigneegstError && <p className="text-red-500 text-xs mt-1">{consigneegstError}</p>}
                 </div>
               </div>
