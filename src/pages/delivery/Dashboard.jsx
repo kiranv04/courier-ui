@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, XCircle, MapPin, Phone, Loader2, IndianRupee } from "lucide-react";
+import { CheckCircle, XCircle, MapPin, Phone, Loader2, IndianRupee, Wallet } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
+import PaymentModal from "../../components/PaymentModal";
 
 const FAILURE_REASONS = [
     { value: "customer_not_available", label: "Customer Not Available" },
@@ -157,7 +158,7 @@ const FailModal = ({ isOpen, onClose, assignment }) => {
     );
 };
 
-function ShipmentCard({ assignment, onDeliver, onFail, isReattempt = false }) {
+function ShipmentCard({ assignment, onDeliver, onFail, onPayment, isReattempt = false }) {
     const s = assignment.shipment;
     const totalBoxes  = s.parcels?.reduce((sum, p) => sum + p.num_boxes, 0) ?? 0;
     const totalWeight = s.parcels?.reduce((sum, p) => sum + (p.weight * p.num_boxes), 0) ?? 0;
@@ -232,6 +233,13 @@ function ShipmentCard({ assignment, onDeliver, onFail, isReattempt = false }) {
                 Failed
             </button>
         </div>
+        <button
+            onClick={onPayment}
+            className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition text-sm"
+        >
+            <Wallet size={16} />
+            Record Payment
+        </button>
       </div>
     );
 }
@@ -240,6 +248,7 @@ export default function DeliveryDashboard() {
     const { data: user }  = useAuth();
     const [deliverModal, setDeliverModal] = useState(null);
     const [failModal, setFailModal]       = useState(null);
+    const [paymentModal, setPaymentModal] = useState(null);
 
     const { data: assignments = [], isLoading } = useQuery({
         queryKey: ["delivery-shipments"],
@@ -296,6 +305,7 @@ export default function DeliveryDashboard() {
                                             assignment={a}
                                             onDeliver={() => setDeliverModal(a)}
                                             onFail={() => setFailModal(a)}
+                                            onPayment={() => setPaymentModal(a)}
                                         />
                                     ))}
                                 </div>
@@ -314,6 +324,7 @@ export default function DeliveryDashboard() {
                                             assignment={a}
                                             onDeliver={() => setDeliverModal(a)}
                                             onFail={() => setFailModal(a)}
+                                            onPayment={() => setPaymentModal(a)}
                                             isReattempt
                                         />
                                     ))}
@@ -333,6 +344,11 @@ export default function DeliveryDashboard() {
                 isOpen={!!failModal}
                 onClose={() => setFailModal(null)}
                 assignment={failModal}
+            />
+            <PaymentModal
+                isOpen={!!paymentModal}
+                onClose={() => setPaymentModal(null)}
+                shipment={paymentModal?.shipment}
             />
         </div>
     );

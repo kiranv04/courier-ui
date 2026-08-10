@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, FileText, Package, Truck, FileCheck, X } from "lucide-react";
+import { ArrowLeft, Edit, FileText, Package, Truck, FileCheck, X, IndianRupee } from "lucide-react";
 import api from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
 import { formatDate, formatDateTime } from "../../utils/format";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import StatusUpdateModal from "../../components/StatusUpdateModal";
+import PaymentModal from "../../components/PaymentModal";
 
 // ── Toggle (same as PrintConfigPanel) ────────────────────────────────────────
 function Toggle({ checked, onChange, disabled = false }) {
@@ -266,6 +267,7 @@ function LabelValue({ label, value }) {
 export default function ShipmentView() {
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [statusModal, setStatusModal] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: user } = useAuth();
@@ -339,6 +341,15 @@ export default function ShipmentView() {
             <FileText size={18} />
             Print
           </button>
+          {!["draft", "cancelled"].includes(shipment.status) &&  (shipment.customer.customer_type === "cash" ) && (
+            <button
+              onClick={() => setPaymentModalOpen(true)}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+            >
+              <IndianRupee size={18} />
+              Record Payment
+            </button>
+          )}
           {/* {!["delivered", "cancelled"].includes(shipment.status) && (
             <button
               onClick={() => setStatusModal(true)}
@@ -588,6 +599,11 @@ export default function ShipmentView() {
       <StatusUpdateModal
         isOpen={statusModal}
         onClose={() => setStatusModal(false)}
+        shipment={shipment}
+      />
+      <PaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
         shipment={shipment}
       />
     </div>
