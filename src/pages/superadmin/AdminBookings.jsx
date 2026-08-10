@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Filter, Eye, FileText, Edit } from "lucide-react";
 import api from "../../services/api";
+import PaymentStatusBadge from "../../components/PaymnetStatusBadge";
 
 const STATUS_COLORS = {
   draft:              "bg-gray-100 text-gray-600",
@@ -129,6 +130,7 @@ export default function AdminBookings() {
                 <th className="text-left p-4 font-medium text-gray-700">Shipper</th>
                 <th className="text-left p-4 font-medium text-gray-700">Consignee</th>
                 <th className="text-left p-4 font-medium text-gray-700">Service</th>
+                <th className="text-left p-4 font-medium text-gray-700">Payment Status</th>
                 <th className="text-left p-4 font-medium text-gray-700">Status</th>
                 {/* <th className="text-right p-4 font-medium text-gray-700">Amount</th> */}
                 <th className="text-right p-4 font-medium text-gray-700">Actions</th>
@@ -142,6 +144,9 @@ export default function AdminBookings() {
                   <td className="p-4">{s.shipper_name}</td>
                   <td className="p-4">{s.consignee_name}</td>
                   <td className="p-4 text-sm">{s.service}</td>
+                  <td className="p-4">
+                    <PaymentStatusBadge shipment={s} />
+                  </td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[s.status]}`}>
                       {s.status.replace(/_/g, " ").toUpperCase()}
