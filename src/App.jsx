@@ -33,6 +33,7 @@ import CreateCorporateInvoice from './pages/superadmin/CreateCorporateInvoice';
 import AdminReports from './pages/superadmin/AdminReports';
 import ShipmentReport from './pages/shared/ShipmentReport';
 import InvoiceReport from './pages/shared/InvoiceReport';
+import Settings from './pages/superadmin/Settings';
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,12 @@ function AppRoutes() {
           <Route path="/superadmin/reports" element={<AdminReports />} />
           <Route path="/superadmin/reports/shipments" element={<ShipmentReport />} />
           <Route path="/superadmin/reports/invoice" element={<InvoiceReport />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={["super-admin"]} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/superadmin/settings" element={<Settings />} />
         </Route>
       </Route>
 

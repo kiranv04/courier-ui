@@ -8,28 +8,14 @@ export const menuConfig = {
       icon: Wrench,
       children: [
         { to: "/superadmin/cft", label: "CFTs" },
-        // { to: "/superadmin/vehicle-categories", label: "Vehicle Categories" },
         { to: "/superadmin/locations", label: "Locations" },
+        { to: "/superadmin/branch-users", label: "Branch Admins" },
+        { to: "/superadmin/transithub-users", label: "Transit Hub Admins" },
         // { to: "/superadmin/rate-cards", label: "Rate Cards" },
-        // { to: "/superadmin/cost-centers", label: "Cost Centers" },
       ]
     },
-    {
-      label: "Branches", 
-      icon: Building2, 
-      children: [
-        { to: "/superadmin/branches", label: "Branch Management" },
-        { to: "/superadmin/branch-users", label: "Branch Users" },
-      ]
-    },
-    {
-      label: "Transit Hubs", 
-      icon: Warehouse, 
-      children: [
-        { to: "/superadmin/transithub", label: "Transit Hub Management" },
-        { to: "/superadmin/transithub-users", label: "Transit Hub Users" },
-      ]
-    },
+    { to: "/superadmin/branches", label: "Branch Management",icon: Building2, },
+    { to: "/superadmin/transithub", label: "Transit Hub Management",icon: Warehouse, },
     { to: "/superadmin/customers", label: "Customers", icon: Users },
     { to: "/superadmin/shipments", label: "Shipments", icon: Truck },
     { to: "/superadmin/bookings", label: "Bookings", icon: DollarSign },
@@ -41,7 +27,7 @@ export const menuConfig = {
       ]
     },
     { to: "/superadmin/reports", label: "Reports", icon: FileText },
-    // { to: "/superadmin/settings", label: "Settings", icon: Settings },
+    { to: "/superadmin/settings", label: "Settings", icon: Settings },
   ],
 
   "branch-admin": [

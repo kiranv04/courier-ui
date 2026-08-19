@@ -5,6 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api";
 import PrintConfigPanel from "../../components/PrintConfigPanel";
 import { gstValidationMessage } from "../../utils/gst";
+import { mobileValidationMessage } from "../../utils/mobile";
+import { panValidationMessage } from "../../utils/pan";
+import { aadhaarValidationMessage } from "../../utils/aadhar";
+import { emailValidationMessage } from "../../utils/email";
 
 // ── Print Config Modal ────────────────────────────────────────────────────────
 const PrintConfigModal = ({ isOpen, onClose, customer }) => {
@@ -68,6 +72,8 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const [customerType, setCustomerType] = useState("cash");
 
   const gstError = gstValidationMessage(gstNumber);
+  const panError = panValidationMessage(panNumber);
+  const aadhaarError = aadhaarValidationMessage(aadhaarNumber);
 
   // File previews
   const [aadhaarPreview, setAadhaarPreview] = useState(null);
@@ -91,6 +97,8 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const [billGst, setBillGst] = useState("");
 
   const billGstError = gstValidationMessage(billGst);
+  const billPhoneError = mobileValidationMessage(billPhone);
+  const billEmailError = emailValidationMessage(billEmail);
 
   // Shipping
   const [sameAddress, setSameAddress] = useState(true);
@@ -106,6 +114,8 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
   const [shipGst, setShipGst] = useState("");
 
   const shipGstError = gstValidationMessage(shipGst);
+  const shipPhoneError = mobileValidationMessage(shipPhone);
+  const shipEmailError = emailValidationMessage(shipEmail);
 
   const queryClient = useQueryClient();
   
@@ -265,10 +275,29 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
       if (!billCompany.trim()) throw new Error("Company name is required");
       if (!panNumber.trim()) throw new Error("PAN number is required");
     }
+
+    // Format validations (fields are optional unless required above, but if
+    // filled in, they must be in a valid format before we submit)
+    if (aadhaarError) throw new Error(aadhaarError);
+    if (panError) throw new Error(panError);
+    if (gstError) throw new Error(gstError);
+    if (billPhoneError) throw new Error(billPhoneError);
+    if (billEmailError) throw new Error(billEmailError);
+    if (billGstError) throw new Error(billGstError);
+    if (!sameAddress) {
+      if (shipPhoneError) throw new Error(shipPhoneError);
+      if (shipEmailError) throw new Error(shipEmailError);
+      if (shipGstError) throw new Error(shipGstError);
+    }
   };
 
   const handleSave = () => {
-    checkRequiredFields();
+    try {
+      checkRequiredFields();
+    } catch (err) {
+      toast.error(err.message);
+      return;
+    }
     const formData = new FormData();
       formData.append("type", type);
       formData.append("customer_type", customerType); // cash / corporate / RCMF
@@ -394,8 +423,9 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
                   onChange={(e) => setAadhaarNumber(e.target.value)}
                   placeholder="Enter 12-digit Aadhaar number"
                   maxLength={12}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${aadhaarError ? 'border-red-500' : ''}`}
                 />
+                {aadhaarError && <p className="text-red-500 text-xs mt-1">{aadhaarError}</p>}
                 <div className="mt-3">
                   <label className="block text-sm font-medium mb-2">Aadhaar Photo <span className="text-red-700">*</span></label>
                   <div className="flex items-center gap-4">
@@ -438,8 +468,9 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
                 onChange={(e) => setPanNumber(e.target.value.toUpperCase())}
                 placeholder="Enter 10-digit PAN (ABCDE1234F)"
                 maxLength={10}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase"
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase ${panError ? 'border-red-500' : ''}`}
               />
+              {panError && <p className="text-red-500 text-xs mt-1">{panError}</p>}
               <div className="mt-3">
                 <label className="block text-sm font-medium mb-2">PAN Photo <span className="text-red-700">*</span></label>
                 <div className="flex items-center gap-4">
@@ -567,21 +598,27 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
               maxLength={6}
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
-            <input
-              type="tel"
-              value={billPhone}
-              onChange={(e) => setBillPhone(e.target.value)}
-              placeholder="Phone Number"
-              maxLength={10}
-              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="email"
-              value={billEmail}
-              onChange={(e) => setBillEmail(e.target.value)}
-              placeholder="Email"
-              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div>
+              <input
+                type="tel"
+                value={billPhone}
+                onChange={(e) => setBillPhone(e.target.value)}
+                placeholder="Phone Number"
+                maxLength={10}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${billPhoneError ? 'border-red-500' : ''}`}
+              />
+              {billPhoneError && <p className="text-red-500 text-xs mt-1">{billPhoneError}</p>}
+            </div>
+            <div>
+              <input
+                type="email"
+                value={billEmail}
+                onChange={(e) => setBillEmail(e.target.value)}
+                placeholder="Email"
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${billEmailError ? 'border-red-500' : ''}`}
+              />
+              {billEmailError && <p className="text-red-500 text-xs mt-1">{billEmailError}</p>}
+            </div>
             <select
               value={billState}
               onChange={(e) => setBillState(e.target.value)}
@@ -602,7 +639,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
                   onChange={(e) => setBillGst(e.target.value)}
                   placeholder="GST Number"
                   maxLength={15}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase ${gstError ? 'border-red-500' : ''}`}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase ${billGstError ? 'border-red-500' : ''}`}
                 />
                 {billGstError && <p className="text-red-500 text-xs mt-1">{billGstError}</p>}
               </div>
@@ -671,21 +708,27 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
                 maxLength={6}
                 className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
               />
-              <input
-                type="tel"
-                value={shipPhone}
-                onChange={(e) => setShipPhone(e.target.value)}
-                placeholder="Phone Number"
-                maxLength={10}
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="email"
-                value={shipEmail}
-                onChange={(e) => setShipEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div>
+                <input
+                  type="tel"
+                  value={shipPhone}
+                  onChange={(e) => setShipPhone(e.target.value)}
+                  placeholder="Phone Number"
+                  maxLength={10}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shipPhoneError ? 'border-red-500' : ''}`}
+                />
+                {shipPhoneError && <p className="text-red-500 text-xs mt-1">{shipPhoneError}</p>}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  value={shipEmail}
+                  onChange={(e) => setShipEmail(e.target.value)}
+                  placeholder="Email"
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shipEmailError ? 'border-red-500' : ''}`}
+                />
+                {shipEmailError && <p className="text-red-500 text-xs mt-1">{shipEmailError}</p>}
+              </div>
               <select
                 value={shipState}
                 onChange={(e) => setShipState(e.target.value)}
@@ -706,7 +749,7 @@ const CustomerModal = ({ isOpen, onClose, customer = null }) => {
                   onChange={(e) => setShipGst(e.target.value)}
                   placeholder="GST Number"
                   maxLength={15}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${gstError ? 'border-red-500' : ''} font-mono uppercase`}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shipGstError ? 'border-red-500' : ''} font-mono uppercase`}
                 />
                 {shipGstError && <p className="text-red-500 text-xs mt-1">{shipGstError}</p>}
                 </div>
