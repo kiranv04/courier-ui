@@ -4,18 +4,31 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Edit, Plus, RefreshCw, Filter } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import { mobileValidationMessage } from "../../utils/mobile";
+import { emailValidationMessage } from "../../utils/email";
 
 // Reusable Modal
-const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
+const BranchModal = ({ isOpen, onClose, branch = null, locations, states }) => {
   const [form, setForm] = useState({
     name: "",
     code: "",
-    address: "",
+    addressLine1: "",
+    addressLine2: "",
+    addressLine3: "",
     phone: "",
     email: "",
-    location_id: "",
-    yield_ratio: "",
+    yieldRatioDoor: "",
+    yieldRatioWarehouse: "",
+    locationId: "",
+    region: "",
+    pincode: "",
+    state: "",
+    discount: "",
+    discountType: "",
   });
+
+  const phoneError = mobileValidationMessage(form.phone);
+  const emailError = emailValidationMessage(form.email);
 
   const queryClient = useQueryClient();
 
@@ -24,21 +37,37 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
       setForm({
         name: branch?.name || "",
         code: branch?.code || "",
-        address: branch?.address || "",
+        addressLine1: branch?.address_line_1 || "",
+        addressLine2: branch?.address_line_2 || "",
+        addressLine3: branch?.address_line_3 || "",
         phone: branch?.phone || "",
         email: branch?.email || "",
-        location_id: branch?.location_id?.toString() || "",
-        yield_ratio: branch?.yield_ratio || "",
+        yieldRatioDoor: branch?.yield_ratio_door || "",
+        yieldRatioWarehouse: branch?.yield_ratio_warehouse || "",
+        locationId: branch?.location_id?.toString() || "",
+        region: branch?.region || "",
+        pincode: branch?.pincode || "",
+        state: branch?.state?.toString() || "",
+        discount: branch?.discount || "",
+        discountType: branch?.discount_type || "",
       });
     }else if (isOpen){
       setForm({
         name: "",
         code: "",
-        address: "",
+        addressLine1: "",
+        addressLine2: "",
+        addressLine3: "",
         phone: "",
         email: "",
-        location_id: "",
-        yield_ratio: "",
+        yieldRatioDoor: "",
+        yieldRatioWarehouse: "",
+        locationId: "",
+        region: "",
+        pincode: "",
+        state: "",
+        discount: "",
+        discountType: "",
       });
     }
   }, [isOpen, branch]);
@@ -57,10 +86,41 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
   });
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.code.trim() || !form.phone.trim() || !form.yield_ratio.trim() || !form.email.trim()){
-      toast.error("One or more required fields are missing!");
+    if (!form.name.trim() || !form.code.trim()) {
+      toast.error("Name and short code are required fields.");
       return;
-    } 
+    }
+
+    if (!form.addressLine1.trim() && !form.addressLine2.trim()) {
+      toast.error("Please provide complete address.");
+      return;
+    }
+
+    if (!form.phone.trim() && !form.email.trim()) {
+      toast.error("Please provide a phone number or an email.");
+      return;
+    }
+
+    if (!form.yieldRatioDoor.trim() || !form.yieldRatioWarehouse.trim()) {
+      toast.error("Both yield ratios are required");
+      return;
+    }
+
+    if (!form.location_id) {
+      toast.error("Please select a location.");
+      return;
+    }
+
+    if (!form.state) {
+      toast.error("Please select a state.");
+      return;
+    }
+
+    if (!form.discount || !form.discountType) {
+      toast.error("Discount fields are required.");
+      return;
+    }
+
     const payload = {
       ...form,
     };
@@ -112,6 +172,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
               maxLength={10}
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
+            {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
@@ -124,7 +185,60 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
               placeholder="Email"
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
+            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              Yield Ratio - Door to Door (%) <span className="text-red-700">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.yieldRatioDoor}
+              onChange={(e) => setForm({ ...form, yieldRatioDoor: e.target.value })}
+              placeholder="(%)"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              Yield Ratio - Warehouse to Warehouse (%) <span className="text-red-700">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.yieldRatioWarehouse}
+              onChange={(e) => setForm({ ...form, yieldRatioWarehouse: e.target.value })}
+              placeholder="(%)"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+          </div>
+        </div>
+        <label className="block text-sm font-medium text-gray-700 mt-4 capitalize">
+          Address <span className="text-red-700">*</span>
+        </label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+          <input
+            type="text"
+            value={form.addressLine1}
+            onChange={(e) => setForm({ ...form, addressLine1: e.target.value })}
+            placeholder="Address Line 1"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+          />
+          <input
+            type="text"
+            value={form.addressLine2}
+            onChange={(e) => setForm({ ...form, addressLine2: e.target.value })}
+            placeholder="Address Line 2"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+          />
+          <input
+            type="text"
+            value={form.addressLine3}
+            onChange={(e) => setForm({ ...form, addressLine3: e.target.value })}
+            placeholder="Address Line 3"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
               Location <span className="text-red-700">*</span>
@@ -136,25 +250,64 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
-              Yield Ratio (%) <span className="text-red-700">*</span>
+              Region
             </label>
             <input
               type="text"
-              value={form.yield_ratio}
-              onChange={(e) => setForm({ ...form, yield_ratio: e.target.value })}
-              placeholder="Yield Ratio (%)"
+              value={form.region}
+              onChange={(e) => setForm({ ...form, region: e.target.value })}
+              placeholder="Region"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              Pincode
+            </label>
+            <input
+              type="text"
+              value={form.pincode}
+              onChange={(e) => setForm({ ...form, pincode: e.target.value })}
+              placeholder="Pincode"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              State <span className="text-red-700">*</span>
+            </label>
+            <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className="w-full px-4 py-3 border rounded-lg">
+              <option value="">Select State</option>
+              {states.map(state => <option key={state.id} value={state.id}>{state.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              Discount Type
+            </label>
+            <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value })} className="w-full px-4 py-3 border rounded-lg">
+              <option disabled value="">Select discount type</option>
+              <option value="fixed">Fixed</option>
+              <option value="percent">Percent</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              Discount
+            </label>
+            <input
+              type="text"
+              value={form.discount}
+              onChange={(e) => setForm({ ...form, discount  : e.target.value })}
+              placeholder="Discount Value"
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
           </div>
         </div>
-        <label className="block text-sm font-medium text-gray-700 mt-4 capitalize">
-          Address <span className="text-red-700">*</span>
-        </label>
-        <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" rows={3} className="w-full mt-1 px-4 py-3 border rounded-lg" />
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleSave}
-            disabled={!form.name.trim() || !form.code.trim() || mutation.isPending}
+            disabled={mutation.isPending}
             className="flex-1 bg-linear-to-r from-green-800 to-green-300 text-white cursor-pointer py-3 rounded-lg hover:opacity-90 disabled:opacity-50 transition"
           >
             {mutation.isPending ? "Saving..." : "Save"}
@@ -225,6 +378,19 @@ export default function Branch() {
   locationsData.forEach(location => {
     if (location?.id && location?.name) {
       locationMap[location.id] = location.name;
+    }
+  });
+
+  const { data: statesData = [] } = useQuery({
+    queryKey: ["states"],
+    queryFn: () => api.get("/api/states").then(res => res.data.data || res.data ||  []),
+    staleTime: Infinity,
+  });
+
+  const stateMap = {};
+  statesData.forEach(state => {
+    if (state?.id && state?.name) {
+      stateMap[state.id] = state.name;
     }
   });
 
@@ -359,6 +525,7 @@ export default function Branch() {
         onClose={() => setModalOpen(false)}
         branch={editingBranch}
         locations={locationsData}
+        states={statesData}
       />
 
       <ConfirmModal

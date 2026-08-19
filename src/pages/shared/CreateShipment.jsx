@@ -7,6 +7,8 @@ import { roundTo2 } from "../../utils/money";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { gstValidationMessage } from "../../utils/gst";
+import { mobileValidationMessage } from "../../utils/mobile";
+import { emailValidationMessage } from "../../utils/email";
 import { set } from "react-hook-form";
 
 const RateModal = ({ open, onClose, payment, boxes, weight, volWeight, serviceType, savedRates, totalInvoiceAmount, onSave }) => {
@@ -422,6 +424,8 @@ export default function CreateShipment() {
   const [shipperEmail, setShipperEmail] = useState('');
   const [shipperGst, setShipperGst] = useState('');
   const shippergstError = gstValidationMessage(shipperGst);
+  const shipperPhoneError = mobileValidationMessage(shipperPhone);
+  const shipperEmailError = emailValidationMessage(shipperEmail);
 
   // Document dimensions
   const [docLength, setDocLength] = useState(10);
@@ -447,6 +451,7 @@ export default function CreateShipment() {
   const [receiverName, setReceiverName] = useState("");
 
   const consigneegstError = gstValidationMessage(consigneeGst);
+  const consigneePhoneError = mobileValidationMessage(consigneePhone);
 
   const [serviceType, setServiceType] = useState("");
   const [service, setService] = useState("Parcel");
@@ -764,6 +769,27 @@ export default function CreateShipment() {
       return;
     }
 
+    if (shipperPhoneError) {
+      toast.error(`Sender ${shipperPhoneError.charAt(0).toLowerCase()}${shipperPhoneError.slice(1)}`);
+      return;
+    }
+    if (shipperEmailError) {
+      toast.error(`Sender ${shipperEmailError.charAt(0).toLowerCase()}${shipperEmailError.slice(1)}`);
+      return;
+    }
+    if (shippergstError) {
+      toast.error(`Sender ${shippergstError.charAt(0).toLowerCase()}${shippergstError.slice(1)}`);
+      return;
+    }
+    if (consigneePhoneError) {
+      toast.error(`Receiver ${consigneePhoneError.charAt(0).toLowerCase()}${consigneePhoneError.slice(1)}`);
+      return;
+    }
+    if (consigneegstError) {
+      toast.error(`Receiver ${consigneegstError.charAt(0).toLowerCase()}${consigneegstError.slice(1)}`);
+      return;
+    }
+
     let payload = {};
     
     if (service === "Parcel"){
@@ -913,11 +939,13 @@ export default function CreateShipment() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Phone Number <span className="text-red-500">*</span></label>
-                  <input type="text" value={shipperPhone} maxLength={10} onChange={(e) => setShipperPhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" value={shipperPhone} maxLength={10} onChange={(e) => setShipperPhone(e.target.value)} placeholder="Phone Number" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shipperPhoneError ? 'border-red-500' : ''}`} />
+                  {shipperPhoneError && <p className="text-red-500 text-xs mt-1">{shipperPhoneError}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Email <span className="text-red-500">*</span></label>
-                  <input type="email" value={shipperEmail} onChange={(e) => setShipperEmail(e.target.value)} placeholder="Email" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="email" value={shipperEmail} onChange={(e) => setShipperEmail(e.target.value)} placeholder="Email" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shipperEmailError ? 'border-red-500' : ''}`} />
+                  {shipperEmailError && <p className="text-red-500 text-xs mt-1">{shipperEmailError}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -963,13 +991,13 @@ export default function CreateShipment() {
                 <div className="relative">
                   <label className="block text-sm font-medium mb-2">Pincode <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <input type="text" value={shipperPincode} onChange={(e) => setShipperPincode(e.target.value)} placeholder="Pincode" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${shippergstError ? "border-red-400" : ""}`} />
+                    <input type="text" value={shipperPincode} onChange={(e) => setShipperPincode(e.target.value)} placeholder="Pincode" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
                   </div>
                 </div>
                 {type === "company" && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Sender GST Number <span className="text-red-500">*</span></label>
-                    <input type="text" minLength={15} maxLength={15} value={shipperGst} onChange={(e) => setShipperGst(e.target.value)} placeholder="GST Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="text" minLength={15} maxLength={15} value={shipperGst} onChange={(e) => setShipperGst(e.target.value)} placeholder="GST Number" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shippergstError ? 'border-red-500' : ''}`} />
                     {shippergstError && <p className="text-red-500 text-xs mt-1">{shippergstError}</p>}
                   </div>
                 )}
@@ -1319,7 +1347,8 @@ export default function CreateShipment() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Phone Number</label>
-                  <input type="text" value={consigneePhone} maxLength={10} onChange={(e) => setConsigneePhone(e.target.value)} placeholder="Phone Number" className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" value={consigneePhone} maxLength={10} onChange={(e) => setConsigneePhone(e.target.value)} placeholder="Phone Number" className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${consigneePhoneError ? 'border-red-500' : ''}`} />
+                  {consigneePhoneError && <p className="text-red-500 text-xs mt-1">{consigneePhoneError}</p>}
                 </div>
                 <div className="relative">
                   <label className="block text-sm font-medium mb-2">Address Line 1 <span className="text-red-500">*</span></label>

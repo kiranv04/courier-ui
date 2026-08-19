@@ -4,17 +4,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Edit, Plus, RefreshCw, Filter } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import { mobileValidationMessage } from "../../utils/mobile";
+import { emailValidationMessage } from "../../utils/email";
 
 // Reusable Modal
-const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
+const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations, states }) => {
   const [form, setForm] = useState({
     name: "",
     code: "",
-    address: "",
+    addressLine1: "",
+    addressLine2: "",
+    addressLine3: "",
     phone: "",
     email: "",
     location_id: "",
+    state: "",
+    pincode: "",
+    region: "",
   });
+
+  const phoneError = mobileValidationMessage(form.phone);
+  const emailError = emailValidationMessage(form.email);
 
   const queryClient = useQueryClient();
 
@@ -23,19 +33,29 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
       setForm({
         name: warehouse?.name || "",
         code: warehouse?.code || "",
-        address: warehouse?.address || "",
+        addressLine1: warehouse?.addressLine1 || "",
+        addressLine2: warehouse?.addressLine2 || "",
+        addressLine3: warehouse?.addressLine3 || "",
         phone: warehouse?.phone_no || "",
         email: warehouse?.email || "",
         location_id: warehouse?.location_id?.toString() || "",
+        state: warehouse?.state || "",
+        pincode: warehouse?.pincode || "",
+        region: warehouse?.region || "",
       });
     }else if (isOpen){
       setForm({
         name: "",
         code: "",
-        address: "",
+        addressLine1: "",
+        addressLine2: "",
+        addressLine3: "",
         phone: "",
         email: "",
         location_id: "",
+        state: "",
+        pincode: "",
+        region: "",
       });
     }
   }, [isOpen, warehouse]);
@@ -50,11 +70,38 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
       toast.success(warehouse ? "Transithub updated!" : "Transithub created!");
       onClose();
     },
-    onError: () => toast.error("Something went wrong"),
+    onError: (error) => {
+      const message = error?.response?.data?.message || "Something went wrong";
+      toast.error(message);
+    },
   });
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.code.trim()) return;
+    if (!form.name.trim() || !form.code.trim()) {
+      toast.error("Name and short code are required fields.");
+      return;
+    }
+
+    if (!form.addressLine1.trim() && !form.addressLine2.trim()) {
+      toast.error("Please provide complete address.");
+      return;
+    }
+
+    if (!form.phone.trim() && !form.email.trim()) {
+      toast.error("Please provide a phone number or an email.");
+      return;
+    }
+
+    if (!form.location_id) {
+      toast.error("Please select a location.");
+      return;
+    }
+
+    if (!form.state) {
+      toast.error("Please select a state.");
+      return;
+    }
+
     const payload = {
       ...form,
     };
@@ -84,10 +131,12 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
-              Code <span className="text-red-700">*</span>
+              Short Code <span className="text-red-700">*</span>
             </label>
             <input
               type="text"
+              required
+              minLength={3}
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
               placeholder="Short code (e.g. MAIN, BR01)"
@@ -106,6 +155,7 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
               maxLength={10}
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
+            {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
@@ -114,11 +164,40 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
             <input
               type="text"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value.toUpperCase() })}
+              onChange={(e) => setForm({ ...form, email: e.target.value.toLowerCase() })}
               placeholder="Email"
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
+            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
           </div>
+        </div>
+        <label className="block text-sm font-medium text-gray-700 mt-4 capitalize">
+          Address <span className="text-red-700">*</span>
+        </label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+          <input
+            type="text"
+            value={form.addressLine1}
+            onChange={(e) => setForm({ ...form, addressLine1: e.target.value })}
+            placeholder="Address Line 1"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+          />
+          <input
+            type="text"
+            value={form.addressLine2}
+            onChange={(e) => setForm({ ...form, addressLine2: e.target.value })}
+            placeholder="Address Line 2"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+          />
+          <input
+            type="text"
+            value={form.addressLine3}
+            onChange={(e) => setForm({ ...form, addressLine3: e.target.value })}
+            placeholder="Address Line 3"
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
               Location <span className="text-red-700">*</span>
@@ -128,15 +207,44 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations }) => {
                 {locations.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              Region
+            </label>
+            <input
+              type="text"
+              value={form.region}
+              onChange={(e) => setForm({ ...form, region: e.target.value })}
+              placeholder="Region"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              Pincode
+            </label>
+            <input
+              type="text"
+              value={form.pincode}
+              onChange={(e) => setForm({ ...form, pincode: e.target.value })}
+              placeholder="Pincode"
+              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              State <span className="text-red-700">*</span>
+            </label>
+            <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className="w-full px-4 py-3 border rounded-lg">
+                <option value="">Select State</option>
+                {states.map(state => <option key={state.id} value={state.id}>{state.name}</option>)}
+            </select>
+          </div>
         </div>
-        <label className="block text-sm font-medium text-gray-700 mt-4 capitalize">
-          Address <span className="text-red-700">*</span>
-        </label>
-        <textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" rows={3} className="w-full mt-1 px-4 py-3 border rounded-lg" />
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleSave}
-            disabled={!form.name.trim() || !form.code.trim() || mutation.isPending}
+            disabled={mutation.isPending}
             className="flex-1 bg-linear-to-r from-green-800 to-green-300 text-white cursor-pointer py-3 rounded-lg hover:opacity-90 disabled:opacity-50 transition"
           >
             {mutation.isPending ? "Saving..." : "Save"}
@@ -207,6 +315,19 @@ export default function Warehouse() {
   locationsData.forEach(location => {
     if (location?.id && location?.name) {
       locationMap[location.id] = location.name;
+    }
+  });
+
+  const { data: statesData = [] } = useQuery({
+    queryKey: ["states"],
+    queryFn: () => api.get("/api/states").then(res => res.data.data || res.data ||  []),
+    staleTime: Infinity,
+  });
+
+  const stateMap = {};
+  statesData.forEach(state => {
+    if (state?.id && state?.name) {
+      stateMap[state.id] = state.name;
     }
   });
 
@@ -339,6 +460,7 @@ export default function Warehouse() {
         onClose={() => setModalOpen(false)}
         warehouse={editingWarehouse}
         locations={locationsData}
+        states={statesData}
       />
 
       <ConfirmModal

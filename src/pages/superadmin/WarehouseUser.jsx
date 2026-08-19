@@ -87,7 +87,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">{user ? "Edit Branch User" : "Add Branch User"}</h2>
+        <h2 className="text-2xl font-bold mb-6">{user ? "Edit Transit Hub Admin" : "Add Transit Hub Admin"}</h2>
         <div className="space-y-4">
           <input
             type="text"
@@ -126,7 +126,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
             onChange={(e) => setForm({ ...form, warehouse_id: e.target.value })}
             className="w-full px-4 py-3 border rounded-lg"
           >
-            <option value="">Select Warehouse</option>
+            <option value="">Select Transit Hub</option>
             {warehouses.map(w => (
               <option key={w.id} value={w.id}>{w.name}</option>
             ))}
@@ -302,7 +302,7 @@ export default function WarehouseUser() {
   return (
     <div className="p-8 bg-white rounded-2xl shadow-2xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Warehouse Users</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Transit Hub Admins</h1>
         <button
           onClick={() => {
             setEditingUser(null);
@@ -311,7 +311,7 @@ export default function WarehouseUser() {
           className="bg-linear-to-r from-blue-500 to-teal-300 text-black cursor-pointer px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
           <Plus size={20} />
-          Add Warehouse User
+          Add Admin
         </button>
       </div>
 
@@ -339,7 +339,7 @@ export default function WarehouseUser() {
               <tr>
                 <th className="text-left p-4">Name</th>
                 <th className="text-left p-4">Email</th>
-                <th className="text-left p-4">Warehouse</th>
+                <th className="text-left p-4">Transit Hub</th>
                 <th className="text-left p-4">Status</th>
                 <th className="text-right p-4">Actions</th>
               </tr>
@@ -358,10 +358,10 @@ export default function WarehouseUser() {
                   <td className="p-4 text-right">
                     {u.is_active ? (
                       <>
-                        <button onClick={() => { setEditingUser(u); setModalOpen(true); }} className="text-blue-600 hover:text-blue-800 mr-3 cursor-pointer">
+                        <button title="Edit Admin" onClick={() => { setEditingUser(u); setModalOpen(true); }} className="text-blue-600 hover:text-blue-800 mr-3 cursor-pointer">
                           <Edit size={18} />
                         </button>
-                        <button onClick={() => setConfirmModal({ open: true, action: "delete", user: u })} className="text-red-600 hover:text-red-800 cursor-pointer mr-3">
+                        <button title="Delete Admin" onClick={() => setConfirmModal({ open: true, action: "delete", user: u })} className="text-red-600 hover:text-red-800 cursor-pointer mr-3">
                           <Trash2 size={18} />
                         </button>
                         <button
@@ -389,7 +389,7 @@ export default function WarehouseUser() {
       <ConfirmModal
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ open: false })}
-        title={confirmModal.action === "delete" ? "Delete branch user?" : "Reactivate branch user?"}
+        title={confirmModal.action === "delete" ? "Delete Transit Hub admin?" : "Reactivate Transit Hub admin?"}
         onConfirm={() => {
           if (confirmModal.action === "delete") deleteMutation.mutate(confirmModal.user.id);
           else reactivateMutation.mutate(confirmModal.user.id);
