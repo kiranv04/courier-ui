@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Edit, Plus, RefreshCw, Filter } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import { mobileValidationMessage } from "../../utils/mobile";
+import { emailValidationMessage } from "../../utils/email";
 
 // Reusable Modal
 const UserModal = ({ isOpen, onClose, user = null }) => {
@@ -14,10 +16,14 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
     rel_id: "",
     owner_id: "",
     branch_id: "",
+    phone: "",
   });
 
+  const phoneError = mobileValidationMessage(form.phone);
+  const emailError = emailValidationMessage(form.email);
+
   useEffect(() => {
-    if (isOpen) {
+    if (user) {
       setForm({
         name: user?.name || "",
         email: user?.email || "",
@@ -25,10 +31,21 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
         password_confirmation: "",
         owner_id: user?.owner_id?.toString() || "",
         warehouse_id: user?.rel_id?.toString() || "",
+        phone: user?.phone || "",
+      });
+    } else {
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        password_confirmation: "",
+        owner_id: "",
+        warehouse_id: "",
+        phone: "",
       });
     }
   }, [isOpen, user]);
-// console.log("Rendering UserModal with user:", user);
+
   const queryClient = useQueryClient();
 
   const { data: warehouses = [] } = useQuery({
@@ -52,10 +69,21 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
   });
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.email.trim() || !form.warehouse_id){
-			toast.error("One or more required field is missing");
+    if (!form.name.trim() || !form.email.trim()){
+			toast.error("Name and email are required");
 			return;
-		} 
+		}
+
+    if (!form.warehouse_id){
+			toast.error("Please select a transit hub.");
+			return;
+		}
+
+    if (!form.phone){
+			toast.error("Phone number is required.");
+			return;
+		}
+
     if (!user && form.password !== form.password_confirmation) {
       toast.error("Passwords do not match");
       return;
@@ -73,6 +101,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
       owner_id: Number(form.warehouse_id),
       rel_id: Number(form.warehouse_id),
       rel_type: "warehouse",
+      phone: form.phone,
     };
     if (form.password) {
       payload.password = form.password;
@@ -96,13 +125,28 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
             placeholder="Name"
             className="w-full px-4 py-3 border rounded-lg"
           />
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            placeholder="Email"
-            className="w-full px-4 py-3 border rounded-lg"
-          />
+          <div>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="Email"
+              className="w-full px-4 py-3 border rounded-lg"
+            />
+            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+          </div>
+          <div>
+            <input
+              type="text"
+              value={form.phone}
+              minLength={10}
+              maxLength={10}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              placeholder="Phone"
+              className="w-full px-4 py-3 border rounded-lg"
+            />
+            {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
+          </div>
           {!user && (
             <>
               <input

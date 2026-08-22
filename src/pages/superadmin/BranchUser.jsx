@@ -3,21 +3,30 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Edit, Plus, RefreshCw, Filter } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import { mobileValidationMessage } from "../../utils/mobile";
+import { emailValidationMessage } from "../../utils/email";
 
 // Reusable Modal
 const UserModal = ({ isOpen, onClose, user = null }) => {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     password_confirmation: "",
     rel_id: "",
     owner_id: "",
     branch_id: "",
+    yieldRatioDoor: "",
+    yieldRatioWarehouse: "",
+    employeeId: ""
   });
 
+  const phoneError = mobileValidationMessage(form.phone);
+  const emailError = emailValidationMessage(form.email);
+
   useEffect(() => {
-    if (isOpen) {
+    if (user) {
       setForm({
         name: user?.name || "",
         email: user?.email || "",
@@ -25,10 +34,25 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
         password_confirmation: "",
         owner_id: user?.owner_id?.toString() || "",
         branch_id: user?.rel_id?.toString() || "",
+        yieldRatioDoor: user?.yield_ratio_door || "",
+        yieldRatioWarehouse: user?.yield_ratio_warehouse || "",
+        phone: user?.phone || "",
+      });
+    } else {
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        password_confirmation: "",
+        owner_id: "",
+        branch_id: "",
+        yieldRatioDoor: "",
+        yieldRatioWarehouse:"",
+        phone: "",
       });
     }
   }, [isOpen, user]);
-// console.log("Rendering UserModal with user:", user);
+
   const queryClient = useQueryClient();
 
   const { data: branches = [] } = useQuery({
@@ -55,10 +79,21 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
   });
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.email.trim() || !form.branch_id){
-			toast.error("One or more required field is missing");
+    if (!form.name.trim() || !form.email.trim()){
+			toast.error("Name and email are required fields.");
 			return;
-		} 
+		}
+
+    if (!form.phone){
+			toast.error("Phone number is required.");
+			return;
+		}
+
+    if (!form.yieldRatioDoor || !form.yieldRatioWarehouse){
+			toast.error("Both yield ratios are required.");
+			return;
+		}
+
     if (!user && form.password !== form.password_confirmation) {
       toast.error("Passwords do not match");
       return;
@@ -71,12 +106,16 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
     const payload = {
       name: form.name.trim(),
       email: form.email.trim(),
+      phone: form.phone,
       role: "branch-admin",
       owner_type: "App\\Models\\Branch",
       owner_id: Number(form.branch_id),
       rel_id: Number(form.branch_id),
       rel_type: "branch",
+      yield_ratio_door: form.yieldRatioDoor,
+      yield_ratio_warehouse: form.yieldRatioWarehouse,
     };
+
     if (form.password) {
       payload.password = form.password;
       payload.password_confirmation = form.password_confirmation;
@@ -90,7 +129,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">{user ? "Edit Branch User" : "Add Branch User"}</h2>
+        <h2 className="text-2xl font-bold mb-6">{user ? "Edit Branch Admin" : "Add Branch Admin"}</h2>
         <div className="space-y-4">
           <input
             type="text"
@@ -99,13 +138,46 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
             placeholder="Name"
             className="w-full px-4 py-3 border rounded-lg"
           />
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            placeholder="Email"
-            className="w-full px-4 py-3 border rounded-lg"
-          />
+          <div>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="Email"
+              className="w-full px-4 py-3 border rounded-lg"
+            />
+            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+          </div>
+          <div>
+            <input
+              type="text"
+              minLength={10}
+              maxLength={10}
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              placeholder="Phone"
+              className="w-full px-4 py-3 border rounded-lg"
+            />
+            {phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
+          </div>
+          <div>
+            <input
+              type="text"
+              value={form.yieldRatioDoor}
+              onChange={(e) => setForm({ ...form, yieldRatioDoor: e.target.value })}
+              placeholder="Yield Ration - Door to door"
+              className="w-full px-4 py-3 border rounded-lg"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={form.yieldRatioWarehouse}
+              onChange={(e) => setForm({ ...form, yieldRatioWarehouse: e.target.value })}
+              placeholder="Yield Ration - Warehouse to warehouse"
+              className="w-full px-4 py-3 border rounded-lg"
+            />
+          </div>
           {!user && (
             <>
               <input
@@ -306,7 +378,7 @@ export default function BranchUser() {
   return (
     <div className="p-8 bg-white rounded-2xl shadow-2xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Branch Users</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Branch Admins</h1>
         <button
           onClick={() => {
             setEditingUser(null);
@@ -315,7 +387,7 @@ export default function BranchUser() {
           className="bg-linear-to-r from-blue-500 to-teal-300 text-black cursor-pointer px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
           <Plus size={20} />
-          Add Branch User
+          Add Admin
         </button>
       </div>
 
