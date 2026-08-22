@@ -165,7 +165,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
               type="text"
               value={form.yieldRatioDoor}
               onChange={(e) => setForm({ ...form, yieldRatioDoor: e.target.value })}
-              placeholder="Yield Ration - Door to door"
+              placeholder="Yield Ratio - Door to door"
               className="w-full px-4 py-3 border rounded-lg"
             />
           </div>
@@ -174,7 +174,7 @@ const UserModal = ({ isOpen, onClose, user = null }) => {
               type="text"
               value={form.yieldRatioWarehouse}
               onChange={(e) => setForm({ ...form, yieldRatioWarehouse: e.target.value })}
-              placeholder="Yield Ration - Warehouse to warehouse"
+              placeholder="Yield Ratio - Warehouse to warehouse"
               className="w-full px-4 py-3 border rounded-lg"
             />
           </div>

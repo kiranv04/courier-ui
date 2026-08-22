@@ -29,17 +29,17 @@ const WarehouseModal = ({ isOpen, onClose, warehouse = null, locations, states }
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (isOpen && warehouse) {
+    if (warehouse) {
       setForm({
         name: warehouse?.name || "",
         code: warehouse?.code || "",
-        addressLine1: warehouse?.addressLine1 || "",
-        addressLine2: warehouse?.addressLine2 || "",
-        addressLine3: warehouse?.addressLine3 || "",
-        phone: warehouse?.phone_no || "",
+        addressLine1: warehouse?.address_line_1 || "",
+        addressLine2: warehouse?.address_line_2 || "",
+        addressLine3: warehouse?.address_line_3 || "",
+        phone: warehouse?.phone || "",
         email: warehouse?.email || "",
         location_id: warehouse?.location_id?.toString() || "",
-        state: warehouse?.state || "",
+        state: warehouse?.state_id?.toString() || "",
         pincode: warehouse?.pincode || "",
         region: warehouse?.region || "",
       });
