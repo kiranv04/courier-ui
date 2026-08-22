@@ -33,7 +33,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations, states }) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (isOpen && branch) {
+    if (branch) {
       setForm({
         name: branch?.name || "",
         code: branch?.code || "",
@@ -44,10 +44,10 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations, states }) => {
         email: branch?.email || "",
         yieldRatioDoor: branch?.yield_ratio_door || "",
         yieldRatioWarehouse: branch?.yield_ratio_warehouse || "",
-        locationId: branch?.location_id?.toString() || "",
+        locationId: branch?.location_id || "",
         region: branch?.region || "",
         pincode: branch?.pincode || "",
-        state: branch?.state?.toString() || "",
+        state: branch?.state_id?.toString() || "",
         discount: branch?.discount || "",
         discountType: branch?.discount_type || "",
       });
@@ -106,7 +106,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations, states }) => {
       return;
     }
 
-    if (!form.location_id) {
+    if (!form.locationId) {
       toast.error("Please select a location.");
       return;
     }
@@ -243,7 +243,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations, states }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
               Location <span className="text-red-700">*</span>
             </label>
-            <select value={form.location_id} onChange={(e) => setForm({ ...form, location_id: e.target.value })} className="w-full px-4 py-3 border rounded-lg">
+            <select value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })} className="w-full px-4 py-3 border rounded-lg">
                 <option value="">Select Location</option>
                 {locations.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
             </select>
@@ -288,7 +288,7 @@ const BranchModal = ({ isOpen, onClose, branch = null, locations, states }) => {
             <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value })} className="w-full px-4 py-3 border rounded-lg">
               <option disabled value="">Select discount type</option>
               <option value="fixed">Fixed</option>
-              <option value="percent">Percent</option>
+              <option value="percentage">Percentage</option>
             </select>
           </div>
           <div>
@@ -387,12 +387,12 @@ export default function Branch() {
     staleTime: Infinity,
   });
 
-  const stateMap = {};
-  statesData.forEach(state => {
-    if (state?.id && state?.name) {
-      stateMap[state.id] = state.name;
-    }
-  });
+  // const stateMap = {};
+  // statesData.forEach(state => {
+  //   if (state?.id && state?.name) {
+  //     stateMap[state.id] = state.name;
+  //   }
+  // });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/api/branches/${id}`),
@@ -464,7 +464,9 @@ export default function Branch() {
                 <th className="text-left p-4 font-medium text-gray-700">Name</th>
                 <th className="text-left p-4 font-medium text-gray-700">Code</th>
                 <th className="text-left p-4 font-medium text-gray-700">Location</th>
-                <th className="text-left p-4 font-medium text-gray-700">Yield Ratio (%)</th>
+                <th className="text-left p-4 font-medium text-gray-700">Region</th>
+                <th className="text-left p-4 font-medium text-gray-700">Yield Ratio (D2D) (%)</th>
+                <th className="text-left p-4 font-medium text-gray-700">Yield Ratio (W2W) (%)</th>
                 <th className="text-left p-4 font-medium text-gray-700">Status</th>
                 <th className="text-right p-4 font-medium text-gray-700">Actions</th>
               </tr>
@@ -475,7 +477,9 @@ export default function Branch() {
                   <td className="p-4 font-medium">{branch.name}</td>
                   <td className="p-4 font-mono text-sm">{branch.code}</td>
                   <td className="p-4 font-mono text-sm">{locationMap[branch.location_id] || "-"}</td>
-                  <td className="p-4 font-mono text-sm">{branch.yield_ratio}</td>
+                  <td className="p-4 font-mono text-sm">{branch.region}</td>
+                  <td className="p-4 font-mono text-sm">{branch.yield_ratio_door}</td>
+                  <td className="p-4 font-mono text-sm">{branch.yield_ratio_warehouse}</td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       branch.is_active
